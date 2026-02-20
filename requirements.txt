@@ -1,0 +1,4 @@
+requests
+pandas
+Pillow
+python-dotenv

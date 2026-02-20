@@ -39,11 +39,12 @@ This repository contains a Python-based batch workflow for processing digitized 
 ## 📁 Repository Structure
 
 ```
-template_indexcards_ocr_qwen3vl_openrouter.py    (Main batch processing script)
-/output/                                         (Generated CSV files)
-/errors/                                         (Images that failed processing)
-/logs/                                           (Error & debug logs)
-/input/ (optional)                               (Folder for JPG files)
+indexcard_ocr.py                                 (Main batch processing script)
+config.py                                        (Configuration & Prompts)
+requirements.txt                                 (Python dependencies)
+/output_batches/                                 (Generated results)
+/output_batches/json/                            (Individual JSON outputs)
+/output_batches/csv/                             (Batch CSV outputs)
 ```
 
 
@@ -51,51 +52,43 @@ template_indexcards_ocr_qwen3vl_openrouter.py    (Main batch processing script)
 
 - Python 3.10+
 - An OpenRouter API key
-- Dependencies:
+- Dependencies: See `requirements.txt`
 
 
 
 ## ▶️ Usage
 
-- 1.) Place JPG images of the index cards into an input directory.
--
-
-  ```OPENROUTER_API_KEY=your_api_key_here```
-
+- 1.) Place JPG images of the index cards into an input directory (default: `./input_batches`).
+- 2.) Set your OpenRouter API key:
+  ```bash
+  export OPENROUTER_API_KEY=your_api_key_here
+  ```
 - 3.) Run the script:
-
-  ```python template_indexcards_ocr_qwen3vl_openrouter.py```
-
-- 4.) Processed data will appaer in:
-- ```output/master.csv``` (the aggregated metadata)
-- ```errors/``` (index cards that produced invalid responses)
-- ```logs/``` (detailed error reports)
+  ```bash
+  python indexcard_ocr.py
+  ```
+- 4.) Processed data will appear in `output_batches/`.
 
 ---
 
-- ## 🧠 Workflow Overview
-  
-1. Load & preprocess images
-Each JPG file is opened, validated, and converted to RGB if needed.
+## 🧠 Workflow Overview
 
-2. Vision-LLM request to Qwen3-VL
-The script sends each image to OpenRouter, using a carefully designed extraction template.
+1. **Load & preprocess images**
+Each JPG file is opened and optionally resized for efficient API transfer.
 
-3. Structured response parsing
-LLM output is expected as JSON. The script:
-- parses it
-- normalizes keys
-- validates expected fields
-- drops or logs malformed responses
-  
-4. Append to master CSV
-A consolidated CSV is built incrementally so that processing can resume if interrupted.
+2. **Vision-LLM request to Qwen3-VL**
+The script sends each image to OpenRouter with a structured extraction prompt defined in `config.py`.
 
-5. Error file handling
-- Non-processable images are:
-- moved to /errors/
-- logged in /logs/
-- skipped without interrupting the batch run
+3. **Structured response parsing**
+LLM output is validated as JSON against a schema.
+
+4. **Incremental CSV output**
+Individual results are saved as JSON, and batch CSVs are generated. A master CSV aggregates all results.
+
+5. **Fault-tolerant handling**
+- Exponential backoff for rate limits (429).
+- Checkpointing allows resuming interrupted batches.
+- Robust error logging.
 
 ---
 
