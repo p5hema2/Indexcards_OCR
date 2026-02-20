@@ -1,18 +1,34 @@
 # Roadmap
 
 ## Phase 1: Backend Foundation (FastAPI Integration)
-- [ ] Initialize FastAPI project structure.
-- [ ] Refactor `indexcard_ocr.py` for API use (separating CLI from the core engine).
-- [ ] Implement API endpoint for file uploads (storing to temporary/batch folders).
-- [ ] Implement API endpoint for starting OCR tasks with dynamic field configuration.
-- [ ] Implement WebSocket or polling endpoint for real-time progress updates.
+**Goal:** Implementation of the modular FastAPI service, WebSocket progress tracking, and batch/upload lifecycle logic.
+**Plans:** 3 plans
+- [x] 01-01-PLAN.md — Core architecture and modularized OcrEngine service.
+- [x] 01-02-PLAN.md — Batch lifecycle management, Upload API, and reusable field templates.
+- [x] 01-03-PLAN.md — Real-time progress updates via WebSockets and resilient error recovery.
+
+**Requirements:**
+- [x] [BACKEND-01] Initialize FastAPI project structure (app, models, services).
+- [x] [BACKEND-02] Refactor `indexcard_ocr.py` into a modular `OcrEngine` class.
+- [x] [BACKEND-03] Implement Upload API with Temp-to-Perm lifecycle and naming conventions.
+- [x] [BACKEND-04] Implement Batch configuration and Template management.
+- [x] [BACKEND-05] Implement WebSocket progress tracking (%, X/Y, ETA, live streaming).
+- [x] [BACKEND-06] Implement Error Handling & Recovery (skip-on-error, _errors/ folder).
+- [x] [BACKEND-07] Implement Batch History and Resume/Retry functionality.
 
 ## Phase 2: Frontend Scaffold & Configuration (React)
-- [ ] Initialize React + TypeScript + Tailwind project (Vite-based).
-- [ ] Port the "Museum-Ready" design to React components.
-- [ ] Implement the **Upload** step (Dropzone component).
-- [ ] Implement the **Configure** step (dynamic field management).
-- [ ] Connect Frontend to Backend (API integration).
+**Goal:** Initialize the React frontend, port the "Museum-Ready" design, and implement the Upload/Configure workflow.
+**Plans:** 3 plans
+- [ ] 02-01-PLAN.md — Frontend Foundation & Global Shell.
+- [ ] 02-02-PLAN.md — Step 1: Upload Workflow & API.
+- [ ] 02-03-PLAN.md — Step 2: Configuration & Field Management.
+
+**Requirements:**
+- [ ] [FRONTEND-01] Initialize React + TypeScript + Tailwind project (Vite-based).
+- [ ] [FRONTEND-02] Port the "Museum-Ready" design (Parchment theme) to React components.
+- [ ] [FRONTEND-03] Implement the **Upload** step (Dropzone component + List View).
+- [ ] [FRONTEND-04] Implement the **Configure** step (dynamic field management + templates).
+- [ ] [FRONTEND-05] Connect Frontend to Backend (API integration via TanStack Query).
 
 ## Phase 3: Processing & Results (React)
 - [ ] Implement the **Processing** step with a dynamic progress bar.
