@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic-settings
+python-dotenv
+requests
+pandas
+pillow
+websockets
+aiofiles
+python-multipart
