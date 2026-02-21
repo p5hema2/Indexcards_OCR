@@ -30,6 +30,17 @@
 - [x] [FRONTEND-04] Implement the **Configure** step (dynamic field management + templates).
 - [x] [FRONTEND-05] Connect Frontend to Backend (API integration via TanStack Query).
 
+### Phase 02.1: add turbo (INSERTED)
+
+**Goal:** Set up Turborepo monorepo with unified dev commands, migrate to apps/ + packages/ convention, create shared types package with cross-language codegen.
+**Depends on:** Phase 2
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02.1-01-PLAN.md — Directory restructure (git mv), root package.json + turbo.json, .env path fixes.
+- [ ] 02.1-02-PLAN.md — Backend thin package.json wrapper, frontend workspace updates, root setup script.
+- [ ] 02.1-03-PLAN.md — Shared types package with JSON Schema codegen (TypeScript + Pydantic).
+
 ## Phase 3: Processing & Results (React)
 - [ ] Implement the **Processing** step with a dynamic progress bar.
 - [ ] Connect the progress bar to the Backend (WebSocket/Polling).
