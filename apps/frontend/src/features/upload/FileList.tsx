@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, FileImage, X } from 'lucide-react';
+import { Trash2, FileImage } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWizardStore } from '../../store/wizardStore';
 

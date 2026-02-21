@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from typing import List, Optional
+from typing import List
 from app.services.template_service import template_service
 from app.models.schemas import Template, TemplateCreate, TemplateUpdate
 

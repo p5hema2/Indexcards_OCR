@@ -1,13 +1,12 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import List, Optional, Dict, Any
-from pathlib import Path
+from typing import List
 import json
 import logging
 
 from app.services.batch_manager import batch_manager
 from app.services.ocr_engine import ocr_engine
 from app.services.ws_manager import ws_manager
-from app.models.schemas import BatchCreate, BatchResponse, BatchProgress
+from app.models.schemas import BatchCreate, BatchResponse
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,6 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
         # or OcrEngine handles it if we point it to the _errors folder.
         # The prompt says: "re-process ONLY the files in the _errors/ folder"
         
-        target_dir = batch_path
         if retry_errors:
             error_dir = batch_path / "_errors"
             if error_dir.exists():

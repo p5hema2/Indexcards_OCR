@@ -39,7 +39,7 @@ export const useUploadMutation = () => {
     onSuccess: (data) => {
       toast.success(data.message);
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
       const errorMessage = error.response?.data?.detail || 'Failed to upload files.';
       toast.error(errorMessage);
     },

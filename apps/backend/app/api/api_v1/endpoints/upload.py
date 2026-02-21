@@ -1,8 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form
 from typing import List, Optional
 import shutil
-from pathlib import Path
-import os
 
 from app.services.batch_manager import batch_manager
 from app.models.schemas import UploadResponse
@@ -23,13 +21,14 @@ async def upload_files(
         session_id = batch_manager.generate_session_id()
 
     temp_session_path = batch_manager.get_temp_session_path(session_id)
-    filenames = []
+    filenames: list[str] = []
 
     for file in files:
-        file_path = temp_session_path / file.filename
+        name = file.filename or f"unnamed_{len(filenames)}"
+        file_path = temp_session_path / name
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        filenames.append(file.filename)
+        filenames.append(name)
 
     return UploadResponse(
         session_id=session_id,

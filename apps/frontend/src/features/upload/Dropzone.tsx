@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type FileRejection } from 'react-dropzone';
 import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWizardStore } from '../../store/wizardStore';
@@ -13,10 +13,10 @@ export const Dropzone: React.FC = () => {
   const uploadMutation = useUploadMutation();
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: any[]) => {
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       // Handle rejections
       fileRejections.forEach((rejection) => {
-        rejection.errors.forEach((err: any) => {
+        rejection.errors.forEach((err) => {
           if (err.code === 'file-too-large') {
             toast.error(`File too large: ${rejection.file.name}`, {
               description: 'Maximum size is 10MB.',

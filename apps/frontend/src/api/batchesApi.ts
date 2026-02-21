@@ -30,7 +30,7 @@ export const useCreateBatchMutation = () => {
     onSuccess: (data) => {
       toast.success(`Batch "${data.batch_name}" created successfully.`);
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
       const errorMessage = error.response?.data?.detail || 'Failed to create batch.';
       toast.error(errorMessage);
     },
@@ -43,7 +43,7 @@ export const useStartBatchMutation = () => {
     onSuccess: (data) => {
       toast.success(`Processing started for ${data.batch_name}.`);
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
       const errorMessage = error.response?.data?.detail || 'Failed to start processing.';
       toast.error(errorMessage);
     },

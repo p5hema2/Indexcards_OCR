@@ -4,3 +4,4 @@ ruff
 black
 pytest
 datamodel-code-generator
+types-requests

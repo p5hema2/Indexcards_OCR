@@ -7,7 +7,7 @@ import { useCreateBatchMutation, useStartBatchMutation } from '../../api/batches
 import { toast } from 'sonner';
 
 export const ConfigureStep: React.FC = () => {
-  const { files, fields, sessionId, setStep, setBatchId, resetWizard } = useWizardStore();
+  const { files, fields, sessionId, setStep, setBatchId } = useWizardStore();
   const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 10)}`);
   
   const createBatchMutation = useCreateBatchMutation();

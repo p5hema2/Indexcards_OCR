@@ -171,12 +171,14 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 }
             
             # Enrich metadata
+            if data is None:
+                data = {}
             data["Datei"] = filename
             data["Batch"] = batch_name
-            
+
             # Validation
             ok, v_errors = self._validate_extraction(data)
-            
+
             return {
                 "filename": filename,
                 "batch": batch_name,
