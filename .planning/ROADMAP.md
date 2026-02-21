@@ -42,10 +42,13 @@ Plans:
 - [ ] 02.1-03-PLAN.md — Shared types package with JSON Schema codegen (TypeScript + Pydantic).
 
 ## Phase 3: Processing & Results (React)
-- [ ] Implement the **Processing** step with a dynamic progress bar.
-- [ ] Connect the progress bar to the Backend (WebSocket/Polling).
-- [ ] Implement the **Results** step (summary view, success/error stats).
-- [ ] Add the **CSV Download** feature using Backend-generated files.
+**Goal:** Wire the Processing step to the backend OCR engine via WebSocket with real-time progress and live feed, then display results in an editable data table with summary stats, image thumbnails, retry capability, and CSV/JSON export.
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Backend gaps: cancel support, results/cancel/retry-image endpoints, StaticFiles mount.
+- [ ] 03-02-PLAN.md — Processing step: Zustand extension, WebSocket hook, ProgressBar, LiveFeed, cancel, catastrophic failure detection.
+- [ ] 03-03-PLAN.md — Results step: TanStack sortable/editable table, thumbnails with lightbox, retry, CSV/JSON export.
 
 ## Phase 4: Refinement & Polish
 - [ ] Enhance error handling in the GUI (e.g., failed images list).
