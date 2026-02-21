@@ -4,7 +4,7 @@
 Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 
 ## Current Plan
-02.1-03: Shared types package setup
+02.1-03: COMPLETE — Phase 02.1 complete
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -18,9 +18,9 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - [x] Phase 2: Frontend Scaffold & Configuration (React) completed.
 - [x] Phase 02.1 Plan 01: Turborepo monorepo migration (apps/ + packages/ restructure).
 - [x] Phase 02.1 Plan 02: Backend package.json wrapper, frontend workspace rename, setup script.
+- [x] Phase 02.1 Plan 03: Shared types package with JSON Schema + TypeScript codegen.
 
 ## Active Tasks
-- [ ] Execute Phase 02.1 Plan 03: Shared types package setup.
 - [ ] Execute Phase 3: Processing & Results (React).
 
 ## Key Decisions
@@ -41,10 +41,13 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - **Backend npm wrapper: zero npm deps** — all Python deps managed by uv via requirements files to avoid workspace hoisting issues.
 - **Port conflict detection:** Inline Node net.createServer in dev scripts (cross-platform, no bash-isms).
 - **Frontend test placeholder:** echo 'No tests yet' — turbo won't fail before vitest is wired.
+- **Shared types codegen: custom converter** — json-schema-to-typescript generates duplicate helper types; custom jsonSchemaTypeToTs() produces clean inline types without aliases.
+- **JSON Schema as source of truth:** Edit .schema.json files for API changes, run turbo generate; never edit generated/ directly.
+- **Generated files committed:** generated/ts/index.ts tracked in git so frontend can import without codegen at install time.
 
 ## Last Session
-Stopped at: Phase 02.1 Plan 02 complete (backend wrapper + frontend workspace + setup script)
-Resume file: .planning/phases/02.1-add-turbo/02.1-02-SUMMARY.md
+Stopped at: Phase 02.1 Plan 03 complete (shared-types package with JSON Schema + TypeScript codegen)
+Resume file: .planning/phases/02.1-add-turbo/02.1-03-SUMMARY.md
 
 ## Accumulated Context
 
@@ -52,12 +55,14 @@ Resume file: .planning/phases/02.1-add-turbo/02.1-02-SUMMARY.md
 - Phase 02.1 inserted after Phase 2: add turbo (URGENT)
 - Phase 02.1 Plan 01 complete: flat frontend/+backend/ migrated to apps/+packages/ Turborepo layout
 - Phase 02.1 Plan 02 complete: both apps are full Turborepo workspaces with all turbo task scripts
+- Phase 02.1 Plan 03 complete: packages/shared-types with JSON Schema + TypeScript codegen
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 02.1  | 01   | ~3min    | 3     | 53    |
 | 02.1  | 02   | ~2min    | 3     | 5     |
+| 02.1  | 03   | ~15min   | 2     | 10    |
 
 ## Blockers
 - None.
