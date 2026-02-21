@@ -30,7 +30,13 @@ Phase 2: Frontend Scaffold & Configuration (React)
 - **Font loading:** Crimson Text + IBM Plex Mono via Google Fonts CDN import in index.css.
 
 ## Last Session
-Stopped at: Completed 02-01-PLAN.md (created missing 02-01-SUMMARY.md and committed untracked Task 2/3 files)
+Stopped at: Phase 02.1 context gathered
+Resume file: .planning/phases/02.1-add-turbo/02.1-CONTEXT.md
+
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 02.1 inserted after Phase 2: add turbo (URGENT)
 
 ## Blockers
 - None.
