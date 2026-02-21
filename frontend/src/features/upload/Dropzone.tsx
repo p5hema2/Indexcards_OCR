@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useWizardStore, UploadedFile } from '../../store/wizardStore';
+import { useWizardStore } from '../../store/wizardStore';
+import type { UploadedFile } from '../../store/wizardStore';
 import { useUploadMutation } from '../../api/uploadApi';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

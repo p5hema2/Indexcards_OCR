@@ -1,5 +1,6 @@
 import React from 'react';
-import { useWizardStore, WizardStep } from '../store/wizardStore';
+import { useWizardStore } from '../store/wizardStore';
+import type { WizardStep } from '../store/wizardStore';
 import { Upload, Settings, Play, FileText, CheckCircle2 } from 'lucide-react';
 
 const STEPS: { key: WizardStep; label: string; icon: React.ReactNode }[] = [

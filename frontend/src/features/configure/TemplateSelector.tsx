@@ -1,7 +1,8 @@
 import React from 'react';
 import { LayoutGrid, Loader2 } from 'lucide-react';
 import { useTemplatesQuery } from '../../api/templatesApi';
-import { useWizardStore, MetadataField } from '../../store/wizardStore';
+import { useWizardStore } from '../../store/wizardStore';
+import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
 
 export const TemplateSelector: React.FC = () => {

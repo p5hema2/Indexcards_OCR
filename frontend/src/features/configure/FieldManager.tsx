@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Tag, Info } from 'lucide-react';
-import { useWizardStore, MetadataField } from '../../store/wizardStore';
+import { useWizardStore } from '../../store/wizardStore';
+import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
 
 export const FieldManager: React.FC = () => {
-  const { fields, setFields, removeFile } = useWizardStore();
+  const { fields, setFields } = useWizardStore();
   const [newFieldLabel, setNewFieldLabel] = useState('');
-
-  // Note: removeFile in wizardStore.ts is for files, I need to add removeField or use setFields.
-  // Wait, I saw removeFile in the store but let's re-check if I have removeField.
-  // Re-reading wizardStore.ts showed removeFile. I should have added removeField as well.
 
   const addField = () => {
     if (!newFieldLabel.trim()) return;
