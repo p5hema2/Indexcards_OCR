@@ -19,16 +19,16 @@
 ## Phase 2: Frontend Scaffold & Configuration (React)
 **Goal:** Initialize the React frontend, port the "Museum-Ready" design, and implement the Upload/Configure workflow.
 **Plans:** 3 plans
-- [ ] 02-01-PLAN.md — Frontend Foundation & Global Shell.
-- [ ] 02-02-PLAN.md — Step 1: Upload Workflow & API.
-- [ ] 02-03-PLAN.md — Step 2: Configuration & Field Management.
+- [x] 02-01-PLAN.md — Frontend Foundation & Global Shell.
+- [x] 02-02-PLAN.md — Step 1: Upload Workflow & API.
+- [x] 02-03-PLAN.md — Step 2: Configuration & Field Management.
 
 **Requirements:**
-- [ ] [FRONTEND-01] Initialize React + TypeScript + Tailwind project (Vite-based).
-- [ ] [FRONTEND-02] Port the "Museum-Ready" design (Parchment theme) to React components.
-- [ ] [FRONTEND-03] Implement the **Upload** step (Dropzone component + List View).
-- [ ] [FRONTEND-04] Implement the **Configure** step (dynamic field management + templates).
-- [ ] [FRONTEND-05] Connect Frontend to Backend (API integration via TanStack Query).
+- [x] [FRONTEND-01] Initialize React + TypeScript + Tailwind project (Vite-based).
+- [x] [FRONTEND-02] Port the "Museum-Ready" design (Parchment theme) to React components.
+- [x] [FRONTEND-03] Implement the **Upload** step (Dropzone component + List View).
+- [x] [FRONTEND-04] Implement the **Configure** step (dynamic field management + templates).
+- [x] [FRONTEND-05] Connect Frontend to Backend (API integration via TanStack Query).
 
 ## Phase 3: Processing & Results (React)
 - [ ] Implement the **Processing** step with a dynamic progress bar.
