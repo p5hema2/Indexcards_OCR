@@ -1,5 +1,7 @@
+import shutil
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import List
+from pathlib import Path
+from typing import Any, Dict, List
 import json
 import logging
 
@@ -14,53 +16,56 @@ router = APIRouter()
 
 async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool = False):
     """Background task to run OCR on a batch."""
+    # Get (or create) the cancel event and immediately clear it to ensure a fresh state.
+    # This prevents a stale set event from a previous cancellation aborting the new run.
+    cancel_event = ws_manager.get_or_create_cancel_event(batch_name)
+    cancel_event.clear()
+
     try:
         batch_path = batch_manager.get_batch_path(batch_name)
         config_path = batch_path / "config.json"
-        
+
         fields = None
         if config_path.exists():
             with open(config_path, "r") as f:
                 config = json.load(f)
                 fields = config.get("fields")
 
-        # If retry_errors is True, we might want to move files back from _errors or handle them specifically.
-        # For now, let's assume the retry endpoint moves them back before calling this, 
-        # or OcrEngine handles it if we point it to the _errors folder.
-        # The prompt says: "re-process ONLY the files in the _errors/ folder"
-        
+        # If retry_errors is True, move files back from _errors so ocr_engine can process them.
         if retry_errors:
             error_dir = batch_path / "_errors"
             if error_dir.exists():
-                # Move files back to main batch dir to be processed by ocr_engine
-                import shutil
                 for item in error_dir.iterdir():
                     if item.is_file():
                         shutil.move(str(item), str(batch_path / item.name))
-        
+
         await ocr_engine.process_batch(
             batch_dir=batch_path,
             fields=fields,
             progress_callback=ws_manager.broadcast_progress,
-            resume=resume
+            resume=resume,
+            cancel_event=cancel_event,
         )
-        
-        # Mark as completed in final progress update
-        # We need to know the total to send a 100% update
-        # But process_batch already sends updates.
-        # Let's send a final "completed" status.
+
+        # Mark as completed (or cancelled) in a final progress update
         last_state = ws_manager.batch_states.get(batch_name)
         if last_state:
-            last_state.status = "completed"
+            if cancel_event.is_set():
+                last_state.status = "cancelled"
+            else:
+                last_state.status = "completed"
             await ws_manager.broadcast_progress(batch_name, last_state)
-            
+
     except Exception as e:
         logger.exception(f"Error in background OCR task for {batch_name}: {e}")
-        # Notify via WS if possible
         last_state = ws_manager.batch_states.get(batch_name)
         if last_state:
             last_state.status = "failed"
             await ws_manager.broadcast_progress(batch_name, last_state)
+    finally:
+        # Clean up cancel event after the task ends (success, cancel, or failure)
+        ws_manager.clear_cancel_event(batch_name)
+
 
 @router.post("/", response_model=BatchResponse)
 async def create_batch(batch_data: BatchCreate):
@@ -75,10 +80,10 @@ async def create_batch(batch_data: BatchCreate):
             session_id=batch_data.session_id,
             fields=batch_data.fields
         )
-        
+
         batch_path = batch_manager.get_batch_path(batch_name)
         files_count = len([f for f in batch_path.iterdir() if f.is_file() and f.suffix.lower() in [".jpg", ".jpeg"]])
-        
+
         return BatchResponse(
             batch_name=batch_name,
             status="uploaded",
@@ -89,12 +94,14 @@ async def create_batch(batch_data: BatchCreate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create batch: {str(e)}")
 
+
 @router.get("/", response_model=List[str])
 async def list_batches():
     """
     Lists all permanent batches.
     """
     return batch_manager.list_batches()
+
 
 @router.post("/{batch_name}/start")
 async def start_batch(batch_name: str, background_tasks: BackgroundTasks):
@@ -104,12 +111,79 @@ async def start_batch(batch_name: str, background_tasks: BackgroundTasks):
     batch_path = batch_manager.get_batch_path(batch_name)
     if not batch_path.exists():
         raise HTTPException(status_code=404, detail="Batch not found")
-    
-    # Check if already running? 
-    # For now, let's just start it. OcrEngine with checkpointing will handle resume.
-    
+
     background_tasks.add_task(run_ocr_task, batch_name)
     return {"message": "Batch processing started", "batch_name": batch_name}
+
+
+@router.get("/{batch_name}/results")
+async def get_batch_results(batch_name: str) -> List[Dict[str, Any]]:
+    """
+    Returns the checkpoint.json contents for a batch as a JSON array.
+    Returns an empty list if no checkpoint exists yet.
+    """
+    batch_path = batch_manager.get_batch_path(batch_name)
+    if not batch_path.exists():
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    checkpoint_path = batch_path / "checkpoint.json"
+    if not checkpoint_path.exists():
+        return []
+
+    try:
+        with open(checkpoint_path, "r") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        logger.error(f"Failed to read checkpoint for batch {batch_name}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to read results")
+
+
+@router.post("/{batch_name}/cancel")
+async def cancel_batch(batch_name: str) -> Dict[str, str]:
+    """
+    Sets a cancellation flag that stops OCR after the current image completes.
+    Cancelling a non-running batch is a no-op.
+    """
+    ws_manager.cancel_batch(batch_name)
+    return {"message": "Cancel requested", "batch_name": batch_name}
+
+
+@router.post("/{batch_name}/retry-image/{filename}")
+async def retry_image(batch_name: str, filename: str, background_tasks: BackgroundTasks) -> Dict[str, str]:
+    """
+    Moves a single failed file from _errors/ back to the batch directory,
+    removes its checkpoint entry so it gets re-processed, and starts OCR.
+    """
+    batch_path = batch_manager.get_batch_path(batch_name)
+    if not batch_path.exists():
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    error_file = batch_path / "_errors" / filename
+    if not error_file.exists():
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found in _errors/")
+
+    # Move file back to batch directory
+    shutil.move(str(error_file), str(batch_path / filename))
+
+    # Remove the entry from checkpoint.json so the image gets re-processed
+    checkpoint_path = batch_path / "checkpoint.json"
+    if checkpoint_path.exists():
+        try:
+            with open(checkpoint_path, "r") as f:
+                checkpoint_data = json.load(f)
+            checkpoint_data = [r for r in checkpoint_data if r.get("filename") != filename]
+            with open(checkpoint_path, "w") as f:
+                json.dump(checkpoint_data, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to update checkpoint for retry of {filename}: {e}")
+
+    # Clear any stale cancel event so the retry doesn't abort immediately
+    ws_manager.clear_cancel_event(batch_name)
+
+    background_tasks.add_task(run_ocr_task, batch_name)
+    return {"message": f"Retry started for {filename}", "batch_name": batch_name}
+
 
 @router.post("/{batch_name}/retry")
 async def retry_batch(batch_name: str, background_tasks: BackgroundTasks):
@@ -120,10 +194,13 @@ async def retry_batch(batch_name: str, background_tasks: BackgroundTasks):
     batch_path = batch_manager.get_batch_path(batch_name)
     if not batch_path.exists():
         raise HTTPException(status_code=404, detail="Batch not found")
-    
+
     error_dir = batch_path / "_errors"
     if not error_dir.exists() or not any(error_dir.iterdir()):
         return {"message": "No failed cards to retry", "batch_name": batch_name}
+
+    # Clear any stale cancel event before starting the retry
+    ws_manager.clear_cancel_event(batch_name)
 
     background_tasks.add_task(run_ocr_task, batch_name, retry_errors=True)
     return {"message": "Retry processing started", "batch_name": batch_name}
