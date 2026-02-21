@@ -4,7 +4,7 @@
 Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 
 ## Current Plan
-02.1-02: Backend package.json wrapper
+02.1-03: Shared types package setup
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -17,9 +17,9 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - [x] Step 2: Configuration & Field Management (02-03).
 - [x] Phase 2: Frontend Scaffold & Configuration (React) completed.
 - [x] Phase 02.1 Plan 01: Turborepo monorepo migration (apps/ + packages/ restructure).
+- [x] Phase 02.1 Plan 02: Backend package.json wrapper, frontend workspace rename, setup script.
 
 ## Active Tasks
-- [ ] Execute Phase 02.1 Plan 02: Backend package.json wrapper.
 - [ ] Execute Phase 02.1 Plan 03: Shared types package setup.
 - [ ] Execute Phase 3: Processing & Results (React).
 
@@ -38,21 +38,26 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - **Local caching only:** No remote Turborepo cache.
 - **Task pipeline:** typecheck before build, lint independent, test after build (locked).
 - **Atomic migration commit:** Entire directory restructure in single git commit for clean history.
+- **Backend npm wrapper: zero npm deps** — all Python deps managed by uv via requirements files to avoid workspace hoisting issues.
+- **Port conflict detection:** Inline Node net.createServer in dev scripts (cross-platform, no bash-isms).
+- **Frontend test placeholder:** echo 'No tests yet' — turbo won't fail before vitest is wired.
 
 ## Last Session
-Stopped at: Phase 02.1 Plan 01 complete (Turborepo monorepo migration committed as 1847290)
-Resume file: .planning/phases/02.1-add-turbo/02.1-01-SUMMARY.md
+Stopped at: Phase 02.1 Plan 02 complete (backend wrapper + frontend workspace + setup script)
+Resume file: .planning/phases/02.1-add-turbo/02.1-02-SUMMARY.md
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 - Phase 02.1 inserted after Phase 2: add turbo (URGENT)
 - Phase 02.1 Plan 01 complete: flat frontend/+backend/ migrated to apps/+packages/ Turborepo layout
+- Phase 02.1 Plan 02 complete: both apps are full Turborepo workspaces with all turbo task scripts
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 02.1  | 01   | ~3min    | 3     | 53    |
+| 02.1  | 02   | ~2min    | 3     | 5     |
 
 ## Blockers
 - None.
