@@ -5,6 +5,7 @@ import json
 import logging
 import random
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Callable
@@ -205,12 +206,13 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
         return await asyncio.to_thread(self._process_card_sync, image_path, batch_name, fields, max_size)
 
     async def process_batch(
-        self, 
-        batch_dir: Path, 
+        self,
+        batch_dir: Path,
         fields: Optional[List[str]] = None,
         max_size: Optional[int] = 1600,
         progress_callback: Optional[Callable[[str, Any], Any]] = None,
-        resume: bool = True
+        resume: bool = True,
+        cancel_event: Optional[threading.Event] = None,
     ) -> List[Dict[str, Any]]:
         """Processes an entire batch of images asynchronously using a thread pool."""
         batch_name = batch_dir.name
@@ -261,15 +263,15 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
             loop = asyncio.get_event_loop()
             # Use a dict to track results by filename to handle replacements (retries)
             res_map = {r["filename"]: r for r in results}
-            
+
             with ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
                 futures = {
-                    executor.submit(self._process_card_sync, img, batch_name, fields, max_size): img 
+                    executor.submit(self._process_card_sync, img, batch_name, fields, max_size): img
                     for img in files_to_process
                 }
                 for i, fut in enumerate(as_completed(futures), len(completed_files) + 1):
                     res = fut.result()
-                    
+
                     # Error handling: move failed cards to _errors/
                     if not res.get("success", False):
                         img_path = futures[fut]
@@ -283,7 +285,12 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                     res_map[res["filename"]] = res
                     current_results = list(res_map.values())
                     _save_checkpoint(current_results)
-                    
+
+                    # Cooperative cancellation: check after each image + checkpoint save
+                    if cancel_event and cancel_event.is_set():
+                        logger.info(f"Batch {batch_name} cancelled by user after {i} images")
+                        break
+
                     if progress_callback:
                         elapsed = time.time() - start_time
                         processed_count = i - len(completed_files)
