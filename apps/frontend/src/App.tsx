@@ -3,6 +3,7 @@ import { useWizardStore } from './store/wizardStore';
 import { UploadStep } from './features/upload/UploadStep';
 import { ConfigureStep } from './features/configure/ConfigureStep';
 import { ProcessingStep } from './features/processing/ProcessingStep';
+import { ResultsStep } from './features/results/ResultsStep';
 
 function App() {
   const step = useWizardStore((state) => state.step);
@@ -16,11 +17,7 @@ function App() {
       case 'processing':
         return <ProcessingStep />;
       case 'results':
-        return (
-          <div className="p-12 border border-dashed border-parchment-dark rounded flex flex-col items-center justify-center text-archive-ink/40 uppercase tracking-widest italic animate-pulse">
-            Compiling archival results...
-          </div>
-        );
+        return <ResultsStep />;
       default:
         return null;
     }
