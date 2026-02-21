@@ -5,7 +5,7 @@ Phase 03: Processing & Results (React)
 
 ## Current Plan
 03-01: COMPLETE — Backend prerequisites (results/cancel/retry-image endpoints + StaticFiles)
-03-02: Pending — Processing step (React)
+03-02: COMPLETE — Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure
 03-03: Pending — Results step (React)
 
 ## Recent Milestones
@@ -24,7 +24,7 @@ Phase 03: Processing & Results (React)
 - [x] Phase 03 Plan 01: Backend prerequisites for Processing & Results (results/cancel/retry-image + StaticFiles).
 
 ## Active Tasks
-- [ ] Execute Phase 03 Plan 02: Processing step (React).
+- [x] Execute Phase 03 Plan 02: Processing step (React).
 - [ ] Execute Phase 03 Plan 03: Results step (React).
 
 ## Key Decisions
@@ -52,10 +52,14 @@ Phase 03: Processing & Results (React)
 - **cancel_event cleared at top of run_ocr_task:** Ensures fresh state regardless of invocation path (start, retry, retry-image).
 - **StaticFiles mount after include_router:** API routes take priority; /batches-static serves data/batches/ directory.
 - **Vite ws:true on /api proxy:** WebSocket upgrade for /api/v1/ws/... paths; removed unused /ws entry.
+- **Native WebSocket (not react-use-websocket):** avoids React 19 flushSync incompatibility; no new dependency.
+- **WebSocket onMessage as callback (not hook state):** hook dispatches directly to Zustand; no re-renders on every WS message.
+- **Zustand partialize excludes processingState/results:** prevents localStorage cell-edit performance regression.
+- **3-strike catastrophic failure:** closes WS + best-effort cancel + full-screen troubleshooting screen; user returns to configure.
 
 ## Last Session
-Stopped at: Phase 03 Plan 01 complete (backend prerequisites: results/cancel/retry-image endpoints + StaticFiles)
-Resume file: .planning/phases/03-processing-results-react/03-01-SUMMARY.md
+Stopped at: Phase 03 Plan 02 complete (Processing step React: WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure)
+Resume file: .planning/phases/03-processing-results-react/03-02-SUMMARY.md
 
 ## Accumulated Context
 
@@ -65,6 +69,7 @@ Resume file: .planning/phases/03-processing-results-react/03-01-SUMMARY.md
 - Phase 02.1 Plan 02 complete: both apps are full Turborepo workspaces with all turbo task scripts
 - Phase 02.1 Plan 03 complete: packages/shared-types with JSON Schema + TypeScript codegen
 - Phase 03 Plan 01 complete: backend prerequisites for Processing & Results frontend plans
+- Phase 03 Plan 02 complete: ProcessingStep with native WebSocket, ProgressBar, LiveFeed, cancel, 3-strike catastrophic failure, Zustand partialize
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -73,6 +78,7 @@ Resume file: .planning/phases/03-processing-results-react/03-01-SUMMARY.md
 | 02.1  | 02   | ~2min    | 3     | 5     |
 | 02.1  | 03   | ~15min   | 2     | 10    |
 | 03    | 01   | ~8min    | 2     | 5     |
+| 03    | 02   | ~2min    | 2     | 7     |
 
 ## Blockers
 - None.
