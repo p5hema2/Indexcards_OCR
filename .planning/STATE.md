@@ -1,10 +1,12 @@
 # Project State
 
 ## Current Phase
-Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
+Phase 03: Processing & Results (React)
 
 ## Current Plan
-02.1-03: COMPLETE — Phase 02.1 complete
+03-01: COMPLETE — Backend prerequisites (results/cancel/retry-image endpoints + StaticFiles)
+03-02: Pending — Processing step (React)
+03-03: Pending — Results step (React)
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -19,9 +21,11 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - [x] Phase 02.1 Plan 01: Turborepo monorepo migration (apps/ + packages/ restructure).
 - [x] Phase 02.1 Plan 02: Backend package.json wrapper, frontend workspace rename, setup script.
 - [x] Phase 02.1 Plan 03: Shared types package with JSON Schema + TypeScript codegen.
+- [x] Phase 03 Plan 01: Backend prerequisites for Processing & Results (results/cancel/retry-image + StaticFiles).
 
 ## Active Tasks
-- [ ] Execute Phase 3: Processing & Results (React).
+- [ ] Execute Phase 03 Plan 02: Processing step (React).
+- [ ] Execute Phase 03 Plan 03: Results step (React).
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -44,10 +48,14 @@ Phase 02.1: Add Turbo (Turborepo Monorepo Migration)
 - **Shared types codegen: custom converter** — json-schema-to-typescript generates duplicate helper types; custom jsonSchemaTypeToTs() produces clean inline types without aliases.
 - **JSON Schema as source of truth:** Edit .schema.json files for API changes, run turbo generate; never edit generated/ directly.
 - **Generated files committed:** generated/ts/index.ts tracked in git so frontend can import without codegen at install time.
+- **Cancellation uses threading.Event (not asyncio.Event):** is_set() is thread-safe from ThreadPoolExecutor workers; asyncio.Event is not.
+- **cancel_event cleared at top of run_ocr_task:** Ensures fresh state regardless of invocation path (start, retry, retry-image).
+- **StaticFiles mount after include_router:** API routes take priority; /batches-static serves data/batches/ directory.
+- **Vite ws:true on /api proxy:** WebSocket upgrade for /api/v1/ws/... paths; removed unused /ws entry.
 
 ## Last Session
-Stopped at: Phase 02.1 Plan 03 complete (shared-types package with JSON Schema + TypeScript codegen)
-Resume file: .planning/phases/02.1-add-turbo/02.1-03-SUMMARY.md
+Stopped at: Phase 03 Plan 01 complete (backend prerequisites: results/cancel/retry-image endpoints + StaticFiles)
+Resume file: .planning/phases/03-processing-results-react/03-01-SUMMARY.md
 
 ## Accumulated Context
 
@@ -56,6 +64,7 @@ Resume file: .planning/phases/02.1-add-turbo/02.1-03-SUMMARY.md
 - Phase 02.1 Plan 01 complete: flat frontend/+backend/ migrated to apps/+packages/ Turborepo layout
 - Phase 02.1 Plan 02 complete: both apps are full Turborepo workspaces with all turbo task scripts
 - Phase 02.1 Plan 03 complete: packages/shared-types with JSON Schema + TypeScript codegen
+- Phase 03 Plan 01 complete: backend prerequisites for Processing & Results frontend plans
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -63,6 +72,7 @@ Resume file: .planning/phases/02.1-add-turbo/02.1-03-SUMMARY.md
 | 02.1  | 01   | ~3min    | 3     | 53    |
 | 02.1  | 02   | ~2min    | 3     | 5     |
 | 02.1  | 03   | ~15min   | 2     | 10    |
+| 03    | 01   | ~8min    | 2     | 5     |
 
 ## Blockers
 - None.
