@@ -1,12 +1,12 @@
 # Project State
 
 ## Current Phase
-Phase 03: Processing & Results (React)
+Phase 03: Processing & Results (React) — COMPLETE
 
 ## Current Plan
 03-01: COMPLETE — Backend prerequisites (results/cancel/retry-image endpoints + StaticFiles)
 03-02: COMPLETE — Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure
-03-03: Pending — Results step (React)
+03-03: COMPLETE — Results step (React): sortable table, inline editing, thumbnails, lightbox, export
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -22,10 +22,12 @@ Phase 03: Processing & Results (React)
 - [x] Phase 02.1 Plan 02: Backend package.json wrapper, frontend workspace rename, setup script.
 - [x] Phase 02.1 Plan 03: Shared types package with JSON Schema + TypeScript codegen.
 - [x] Phase 03 Plan 01: Backend prerequisites for Processing & Results (results/cancel/retry-image + StaticFiles).
+- [x] Phase 03 Plan 02: Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure.
+- [x] Phase 03 Plan 03: Results step (React): sortable/editable table, thumbnails, lightbox, CSV/JSON export.
 
 ## Active Tasks
 - [x] Execute Phase 03 Plan 02: Processing step (React).
-- [ ] Execute Phase 03 Plan 03: Results step (React).
+- [x] Execute Phase 03 Plan 03: Results step (React).
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -56,10 +58,15 @@ Phase 03: Processing & Results (React)
 - **WebSocket onMessage as callback (not hook state):** hook dispatches directly to Zustand; no re-renders on every WS message.
 - **Zustand partialize excludes processingState/results:** prevents localStorage cell-edit performance regression.
 - **3-strike catastrophic failure:** closes WS + best-effort cancel + full-screen troubleshooting screen; user returns to configure.
+- **Hydrate results from REST (not WS stream):** GET /batches/{name}/results is authoritative; WS can have gaps from reconnects.
+- **hydratedRef guard in ResultsStep:** prevents double setResults on React Strict Mode double-invoke.
+- **Merge editedData on results hydration:** fresh API data overwrites data fields but editedData map is preserved within session.
+- **Tailwind JIT status color lookup map:** static statusStyles object instead of template literals to avoid JIT purge.
+- **retryImage navigates to processing step:** single-image retry starts new WS stream; retryBatch used for bulk retry (POST /retry).
 
 ## Last Session
-Stopped at: Phase 03 Plan 02 complete (Processing step React: WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure)
-Resume file: .planning/phases/03-processing-results-react/03-02-SUMMARY.md
+Stopped at: Phase 03 Plan 03 complete (Results step React: sortable table, inline editing, thumbnails, lightbox, CSV/JSON export)
+Resume file: .planning/phases/03-processing-results-react/03-03-SUMMARY.md
 
 ## Accumulated Context
 
@@ -70,6 +77,7 @@ Resume file: .planning/phases/03-processing-results-react/03-02-SUMMARY.md
 - Phase 02.1 Plan 03 complete: packages/shared-types with JSON Schema + TypeScript codegen
 - Phase 03 Plan 01 complete: backend prerequisites for Processing & Results frontend plans
 - Phase 03 Plan 02 complete: ProcessingStep with native WebSocket, ProgressBar, LiveFeed, cancel, 3-strike catastrophic failure, Zustand partialize
+- Phase 03 Plan 03 complete: ResultsStep with TanStack Table, editable cells, YARL thumbnails, CSV/JSON export — full wizard end-to-end
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -79,6 +87,7 @@ Resume file: .planning/phases/03-processing-results-react/03-02-SUMMARY.md
 | 02.1  | 03   | ~15min   | 2     | 10    |
 | 03    | 01   | ~8min    | 2     | 5     |
 | 03    | 02   | ~2min    | 2     | 7     |
+| 03    | 03   | ~3min    | 2     | 7     |
 
 ## Blockers
 - None.
