@@ -18,12 +18,58 @@ export interface MetadataField {
   options?: string[];
 }
 
+export interface ExtractionResult {
+  filename: string;
+  batch: string;
+  success: boolean;
+  data: Record<string, string> | null;
+  error?: string | null;
+  duration: number;
+}
+
+export interface BatchProgress {
+  batch_name: string;
+  current: number;
+  total: number;
+  percentage: number;
+  eta_seconds: number | null;
+  last_result: ExtractionResult | null;
+  status: 'running' | 'completed' | 'failed' | 'retrying' | 'cancelled';
+}
+
+export interface ResultRow {
+  filename: string;
+  status: 'success' | 'failed';
+  error?: string;
+  data: Record<string, string>;
+  editedData: Record<string, string>;
+  duration: number;
+}
+
+export interface ProcessingState {
+  consecutiveFailures: number;
+  liveFeedItems: ExtractionResult[];
+  lastProgress: BatchProgress | null;
+  isCancelled: boolean;
+  isProcessing: boolean;
+}
+
+const initialProcessingState: ProcessingState = {
+  consecutiveFailures: 0,
+  liveFeedItems: [],
+  lastProgress: null,
+  isCancelled: false,
+  isProcessing: false,
+};
+
 interface WizardState {
   step: WizardStep;
   files: UploadedFile[];
   fields: MetadataField[];
   sessionId: string | null;
   batchId: string | null;
+  processingState: ProcessingState;
+  results: ResultRow[];
   setStep: (step: WizardStep) => void;
   setSessionId: (id: string | null) => void;
   resetWizard: () => void;
@@ -32,6 +78,15 @@ interface WizardState {
   setFields: (fields: MetadataField[]) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
+  appendLiveFeedItem: (item: ExtractionResult) => void;
+  setLastProgress: (p: BatchProgress) => void;
+  incrementConsecutiveFailures: () => void;
+  resetConsecutiveFailures: () => void;
+  setCancelled: (cancelled: boolean) => void;
+  setIsProcessing: (processing: boolean) => void;
+  setResults: (rows: ResultRow[]) => void;
+  updateResultCell: (filename: string, field: string, value: string) => void;
+  resetProcessing: () => void;
 }
 
 const initialState = {
@@ -40,6 +95,8 @@ const initialState = {
   fields: [],
   sessionId: null,
   batchId: null,
+  processingState: initialProcessingState,
+  results: [] as ResultRow[],
 };
 
 export const useWizardStore = create<WizardState>()(
@@ -57,9 +114,78 @@ export const useWizardStore = create<WizardState>()(
           files: state.files.filter((file) => file.id !== id),
         })),
       clearFiles: () => set({ files: [] }),
+      appendLiveFeedItem: (item) =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            liveFeedItems: [...state.processingState.liveFeedItems, item],
+          },
+        })),
+      setLastProgress: (p) =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            lastProgress: p,
+          },
+        })),
+      incrementConsecutiveFailures: () =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            consecutiveFailures: state.processingState.consecutiveFailures + 1,
+          },
+        })),
+      resetConsecutiveFailures: () =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            consecutiveFailures: 0,
+          },
+        })),
+      setCancelled: (cancelled) =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            isCancelled: cancelled,
+          },
+        })),
+      setIsProcessing: (processing) =>
+        set((state) => ({
+          processingState: {
+            ...state.processingState,
+            isProcessing: processing,
+          },
+        })),
+      setResults: (rows) => set({ results: rows }),
+      updateResultCell: (filename, field, value) =>
+        set((state) => ({
+          results: state.results.map((row) =>
+            row.filename === filename
+              ? {
+                  ...row,
+                  editedData: {
+                    ...row.editedData,
+                    [field]: value,
+                  },
+                }
+              : row
+          ),
+        })),
+      resetProcessing: () =>
+        set({
+          processingState: initialProcessingState,
+          results: [],
+        }),
     }),
     {
       name: 'wizard-storage',
+      partialize: (state) => ({
+        step: state.step,
+        files: state.files,
+        fields: state.fields,
+        sessionId: state.sessionId,
+        batchId: state.batchId,
+      }),
     }
   )
 );
