@@ -57,7 +57,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 """
 
     class Config:
-        env_file = ".env"
+        env_file = ("../../.env", ".env")  # repo root first, then local fallback
         case_sensitive = True
 
 settings = Settings()
