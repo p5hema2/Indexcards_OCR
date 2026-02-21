@@ -2,6 +2,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { useWizardStore } from './store/wizardStore';
 import { UploadStep } from './features/upload/UploadStep';
 import { ConfigureStep } from './features/configure/ConfigureStep';
+import { ProcessingStep } from './features/processing/ProcessingStep';
 
 function App() {
   const step = useWizardStore((state) => state.step);
@@ -13,11 +14,7 @@ function App() {
       case 'configure':
         return <ConfigureStep />;
       case 'processing':
-        return (
-          <div className="p-12 border border-dashed border-parchment-dark rounded flex flex-col items-center justify-center text-archive-ink/40 uppercase tracking-widest italic animate-pulse">
-            Processing collection items...
-          </div>
-        );
+        return <ProcessingStep />;
       case 'results':
         return (
           <div className="p-12 border border-dashed border-parchment-dark rounded flex flex-col items-center justify-center text-archive-ink/40 uppercase tracking-widest italic animate-pulse">
