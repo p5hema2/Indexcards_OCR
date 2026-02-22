@@ -25,12 +25,13 @@ class ExtractionResult(BaseModel):
 
 class BatchConfig(BaseModel):
     fields: List[str]
-    # More to follow as we develop the API
+    prompt_template: Optional[str] = None
 
 class BatchCreate(BaseModel):
     custom_name: str
     session_id: str
     fields: Optional[List[str]] = None
+    prompt_template: Optional[str] = None
 
 class BatchResponse(BaseModel):
     batch_name: str
@@ -53,14 +54,17 @@ class Template(BaseModel):
     id: str
     name: str
     fields: List[str]
+    prompt_template: Optional[str] = None
 
 class TemplateCreate(BaseModel):
     name: str
     fields: List[str]
+    prompt_template: Optional[str] = None
 
 class TemplateUpdate(BaseModel):
     name: Optional[str] = None
     fields: Optional[List[str]] = None
+    prompt_template: Optional[str] = None
 
 class BatchProgress(BaseModel):
     batch_name: str

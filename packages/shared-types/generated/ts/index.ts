@@ -2,12 +2,14 @@
 // Regenerate with: turbo generate (or npm run generate in packages/shared-types)
 export interface BatchConfig {
   fields: string[]
+  prompt_template?: string | null
 }
 
 export interface BatchCreate {
   custom_name: string
   session_id: string
   fields?: string[] | null
+  prompt_template?: string | null
 }
 
 export interface BatchResponse {
@@ -52,16 +54,19 @@ export interface Template {
   id: string
   name: string
   fields: string[]
+  prompt_template?: string | null
 }
 
 export interface TemplateCreate {
   name: string
   fields: string[]
+  prompt_template?: string | null
 }
 
 export interface TemplateUpdate {
   name?: string | null
   fields?: string[] | null
+  prompt_template?: string | null
 }
 
 export interface UploadResponse {

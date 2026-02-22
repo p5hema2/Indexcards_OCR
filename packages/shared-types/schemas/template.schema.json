@@ -18,6 +18,12 @@
           },
           "title": "Fields",
           "type": "array"
+        },
+        "prompt_template": {
+          "anyOf": [{"type": "string"}, {"type": "null"}],
+          "default": null,
+          "title": "Prompt Template",
+          "description": "Custom VLM prompt template with {{fields}} placeholder. Null means use default."
         }
       },
       "required": [
@@ -40,6 +46,12 @@
           },
           "title": "Fields",
           "type": "array"
+        },
+        "prompt_template": {
+          "anyOf": [{"type": "string"}, {"type": "null"}],
+          "default": null,
+          "title": "Prompt Template",
+          "description": "Custom VLM prompt template with {{fields}} placeholder. Null means use default."
         }
       },
       "required": [
@@ -77,6 +89,12 @@
           ],
           "default": null,
           "title": "Fields"
+        },
+        "prompt_template": {
+          "anyOf": [{"type": "string"}, {"type": "null"}],
+          "default": null,
+          "title": "Prompt Template",
+          "description": "Custom VLM prompt template with {{fields}} placeholder. Null means use default."
         }
       },
       "title": "TemplateUpdate",
