@@ -211,3 +211,17 @@ __marimo__/
 
 # Node (root workspace)
 node_modules/
+
+# macOS
+.DS_Store
+
+# Runtime data (user uploads, batch results, templates)
+apps/backend/data/
+
+# Prototype / legacy
+prototype_tests_cards/
+prototype_frontend/
+
+# IDE / tools
+.playwright-mcp/
+.idea/
