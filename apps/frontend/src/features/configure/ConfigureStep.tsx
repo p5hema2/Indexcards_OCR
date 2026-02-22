@@ -3,13 +3,14 @@ import { ArrowLeft, Play, Archive, Info, Loader2 } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import { TemplateSelector } from './TemplateSelector';
 import { FieldManager } from './FieldManager';
+import { ImagePreview } from './ImagePreview';
 import { useCreateBatchMutation, useStartBatchMutation } from '../../api/batchesApi';
 import { toast } from 'sonner';
 
 export const ConfigureStep: React.FC = () => {
   const { files, fields, sessionId, setStep, setBatchId } = useWizardStore();
   const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 10)}`);
-  
+
   const createBatchMutation = useCreateBatchMutation();
   const startBatchMutation = useStartBatchMutation();
 
@@ -95,6 +96,13 @@ export const ConfigureStep: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Image preview - only shown when files are present */}
+          {files.length > 0 && (
+            <div className="bg-parchment-light/30 border border-parchment-dark/50 p-4 rounded-lg parchment-shadow">
+              <ImagePreview />
+            </div>
+          )}
 
           <div className="flex items-center gap-2 p-4 bg-archive-ink/5 border border-archive-ink/20 rounded-lg text-archive-ink/60 text-xs italic">
             <Info className="w-4 h-4 flex-shrink-0" />
