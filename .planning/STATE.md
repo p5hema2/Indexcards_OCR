@@ -1,10 +1,11 @@
 # Project State
 
 ## Current Phase
-Phase 02: Frontend Scaffold & Configuration (React) — UAT COMPLETE
+Phase 02: Frontend Scaffold & Configuration (React) — UAT gap closure
 
 ## Current Plan
-Phase 02 UAT: 10 passed, 2 issues (both fixed inline during UAT)
+02-04: PENDING — Gap closure: sidebar back-navigation to completed steps
+02-05: PENDING — Gap closure: sticky floating WizardNav bar
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -30,8 +31,7 @@ Phase 02 UAT: 10 passed, 2 issues (both fixed inline during UAT)
 - [x] Phase 01 Plan 07 (gap closure): BLOCKER fix — asyncio event loop capture + silent failure broadcast in batches.py.
 
 ## Active Tasks
-- Phase 02 UAT complete (10 pass, 2 issues fixed inline). Both gaps already resolved — no gap closure plans needed.
-- User feedback captured for future phases: back-navigation between wizard steps, more prominent proceed/back buttons.
+- Execute 02-04-PLAN.md (sidebar back-navigation) and 02-05-PLAN.md (sticky WizardNav) — gap closure from UAT user feedback.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.

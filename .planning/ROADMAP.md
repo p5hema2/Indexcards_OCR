@@ -24,10 +24,12 @@
 
 ## Phase 2: Frontend Scaffold & Configuration (React)
 **Goal:** Initialize the React frontend, port the "Museum-Ready" design, and implement the Upload/Configure workflow.
-**Plans:** 3 plans
+**Plans:** 5 plans
 - [x] 02-01-PLAN.md — Frontend Foundation & Global Shell.
 - [x] 02-02-PLAN.md — Step 1: Upload Workflow & API.
 - [x] 02-03-PLAN.md — Step 2: Configuration & Field Management.
+- [ ] 02-04-PLAN.md — Gap closure: sidebar back-navigation to completed steps.
+- [ ] 02-05-PLAN.md — Gap closure: sticky floating WizardNav bar for always-visible navigation.
 
 **Requirements:**
 - [x] [FRONTEND-01] Initialize React + TypeScript + Tailwind project (Vite-based).

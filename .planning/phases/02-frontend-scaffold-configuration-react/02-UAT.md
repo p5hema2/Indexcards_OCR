@@ -69,6 +69,7 @@ passed: 10
 issues: 2
 pending: 0
 skipped: 0
+gaps_from_feedback: 2
 
 ## Gaps
 
@@ -92,7 +93,22 @@ skipped: 0
   missing: []
   fix: "Header: z-30 (above content). Sidebar: h-full + overflow-y-auto + shrink-0 for independent scrolling within flex container."
 
-## User Feedback (for future phases)
+- truth: "Users can navigate back to completed wizard steps to fix mistakes (upload more files, fix field config)"
+  status: failed
+  reason: "User reported: can't go back to a former step if I missed something like uploading additional info or have a typo in field config"
+  severity: minor
+  test: 6, 11
+  root_cause: "Sidebar steps are display-only. No onClick handlers on completed steps — by design decision 'step transitions only via store actions to enforce wizard order'. Back-navigation was not implemented."
+  artifacts: ["Sidebar.tsx"]
+  missing: ["onClick handlers for completed steps", "cursor-pointer hover styles"]
+  plan: "02-04-PLAN.md"
 
-- "Need ability to navigate back to previous wizard steps to fix mistakes (upload more files, fix typos in field config)"
-- "Proceed/back buttons should be more prominent — duplicated top+bottom or sticky floating, so user doesn't have to scroll"
+- truth: "Proceed/back buttons are always visible without scrolling on all wizard steps"
+  status: failed
+  reason: "User reported: proceed/back buttons should be more prominent or duplicated top+bottom or floating sticky so user doesn't need endless scrolling"
+  severity: minor
+  test: 6
+  root_cause: "Navigation buttons are inline at the bottom of each step's content. On long pages (many files, many fields), users must scroll past all content to reach the buttons."
+  artifacts: ["UploadStep.tsx", "ConfigureStep.tsx", "ResultsStep.tsx"]
+  missing: ["Sticky/floating navigation bar component"]
+  plan: "02-05-PLAN.md"
