@@ -1,10 +1,10 @@
 # Project State
 
 ## Current Phase
-Phase 02: Frontend Scaffold & Configuration (React) — UAT PASSED (all tests green)
+Phase 03.1: Dynamic Prompt Generation from Field Definitions with Configurable Prompt Template
 
 ## Current Plan
-All 5 plans complete. UAT re-test 4/4 passed.
+Plan 01 complete (prompt_template data models + pipeline wiring). Ready for Phase 03.1 Plan 02 or UAT.
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -83,10 +83,14 @@ All 5 plans complete. UAT re-test 4/4 passed.
 - **24-hour default for stale session cleanup:** configurable via max_age_hours parameter; runs on every server startup.
 - **Sidebar step clickability guard in component (not store):** handleStepClick in Sidebar guards processing/results from sidebar navigation; setStep in store remains unrestricted so loadBatchForReview and other callers work freely.
 - **WizardNav uses sticky bottom-0 (not fixed):** nav bar stays within main scroll container and does not overlap the Footer; ProcessingStep excluded from WizardNav.
+- **prompt_template uses {{fields}} substitution with append fallback:** if placeholder absent in template, fields block appended after two newlines; null/absent means existing hardcoded German prompt.
+- **prompt_template read via config.get() in run_ocr_task:** backward compatibility with existing config.json files that lack the key — no migration required.
+- **process_batch prompt_template at end of signature:** avoids breaking existing callers that use positional args for earlier parameters.
 
 ## Last Session
-Stopped at: Completed Phase 02.1 UAT (7/7 passed)
+Stopped at: Completed Phase 03.1 Plan 01 — prompt_template data models and OCR pipeline wiring
 Resume file: .planning/STATE.md
+Timestamp: 2026-02-22T15:31:00Z
 
 ## Accumulated Context
 
@@ -106,6 +110,8 @@ Resume file: .planning/STATE.md
 - Phase 01 Plan 07 (gap closure) complete: BLOCKER fix — asyncio event loop capture in async context + fallback BatchProgress broadcast on all exit paths
 - Phase 02 Plan 04 (gap closure) complete: Sidebar clickability enabled for completed steps; handleStepClick guard in Sidebar.tsx; setStep in store remains unrestricted
 - Phase 02 Plan 05 (gap closure) complete: WizardNav sticky bottom nav component; inline buttons removed from Upload, Configure, Results steps; ProcessingStep unchanged
+- Phase 03.1 inserted after Phase 3: Dynamic prompt generation from field definitions with configurable prompt template (URGENT)
+- Phase 03.1 Plan 01 complete: prompt_template added to all 5 data model types (schema, TS, Python, Pydantic) and wired end-to-end through OCR pipeline with {{fields}} substitution and backward-compat fallback.
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -124,6 +130,7 @@ Resume file: .planning/STATE.md
 | 01    | 07   | ~2min    | 2     | 2     |
 | 02    | 04   | ~2min    | 1     | 1     |
 | 02    | 05   | ~5min    | 2     | 4     |
+| 03.1  | 01   | ~4min    | 2     | 9     |
 
 ## Blockers
 - None.
