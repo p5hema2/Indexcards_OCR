@@ -36,6 +36,7 @@ export interface BatchProgress {
   eta_seconds: number | null;
   last_result: ExtractionResult | null;
   status: 'running' | 'completed' | 'failed' | 'retrying' | 'cancelled';
+  error?: string | null;
 }
 
 export interface ResultRow {

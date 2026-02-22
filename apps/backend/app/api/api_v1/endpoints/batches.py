@@ -69,9 +69,11 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
 
     except Exception as e:
         logger.exception(f"Error in background OCR task for {batch_name}: {e}")
+        error_msg = str(e)
         last_state = ws_manager.batch_states.get(batch_name)
         if last_state:
             last_state.status = "failed"
+            last_state.error = error_msg
             await ws_manager.broadcast_progress(batch_name, last_state)
         else:
             # No progress was ever broadcast — create minimal failed state
@@ -81,6 +83,7 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
                 total=0,
                 percentage=0.0,
                 status="failed",
+                error=error_msg,
             )
             await ws_manager.broadcast_progress(batch_name, failed_state)
     finally:

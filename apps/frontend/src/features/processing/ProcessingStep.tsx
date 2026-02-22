@@ -64,6 +64,11 @@ export const ProcessingStep: React.FC = () => {
           }, 2000);
         }
       }
+
+      // Batch-level failure broadcast from backend
+      if (progress.status === 'failed') {
+        setIsProcessing(false);
+      }
     },
     [
       setLastProgress,
@@ -86,8 +91,15 @@ export const ProcessingStep: React.FC = () => {
     };
   }, []);
 
-  // Catastrophic failure detection: 3 consecutive failures
-  const isCatastrophicFailure = consecutiveFailures >= 3;
+  // Catastrophic failure detection: 3 consecutive failures OR batch-level "failed" status
+  const isBatchFailed = lastProgress?.status === 'failed';
+  const isCatastrophicFailure = consecutiveFailures >= 3 || isBatchFailed;
+
+  // Extract the most relevant error message for display
+  const errorDetail =
+    lastProgress?.error ||
+    liveFeedItems.findLast((item) => item.error)?.error ||
+    null;
 
   useEffect(() => {
     if (isCatastrophicFailure && isProcessing) {
@@ -127,10 +139,21 @@ export const ProcessingStep: React.FC = () => {
             <div className="space-y-2">
               <h2 className="text-2xl font-serif text-archive-sepia">Processing Halted</h2>
               <p className="text-archive-ink/60 font-serif italic">
-                Processing stopped after 3 consecutive failures.
+                {isBatchFailed
+                  ? 'The backend reported a processing failure.'
+                  : 'Processing stopped after 3 consecutive failures.'}
               </p>
             </div>
           </div>
+
+          {errorDetail && (
+            <div className="bg-red-50/30 border border-red-500/20 rounded p-4">
+              <h3 className="text-xs uppercase tracking-widest text-red-700/50 font-semibold mb-2">
+                Error Detail
+              </h3>
+              <p className="text-sm text-red-800/80 font-mono break-words">{errorDetail}</p>
+            </div>
+          )}
 
           <div className="space-y-2 bg-archive-ink/5 border border-archive-ink/10 rounded p-4">
             <h3 className="text-xs uppercase tracking-widest text-archive-ink/40 font-semibold">

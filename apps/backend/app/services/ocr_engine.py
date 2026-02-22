@@ -120,6 +120,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 
         max_retries = settings.MAX_RETRIES
         attempt = 0
+        last_error_msg = "Max retries reached"
         while attempt < max_retries:
             try:
                 resp = self.session.post(settings.API_ENDPOINT, headers=headers, json=payload, timeout=120)
@@ -130,6 +131,16 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                     time.sleep(wait)
                     attempt += 1
                     continue
+                # Non-retriable HTTP errors: fail fast with the actual API message
+                if resp.status_code in (401, 403):
+                    try:
+                        body = resp.json()
+                        api_msg = body.get("error", {}).get("message", resp.text[:200])
+                    except Exception:
+                        api_msg = resp.text[:200]
+                    error = f"API error {resp.status_code}: {api_msg}"
+                    logger.error(f"[{image_path.name}] {error}")
+                    return None, error
                 resp.raise_for_status()
                 result = resp.json()
                 if "choices" in result and len(result["choices"]) > 0:
@@ -144,6 +155,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 else:
                     return None, "No choices returned by API"
             except requests.exceptions.RequestException as e:
+                last_error_msg = str(e)
                 wait = (2 ** attempt) + random.uniform(0, 1)
                 logger.warning(f"RequestException: {e}. Retrying in {wait:.1f}s (attempt {attempt+1}/{max_retries})")
                 time.sleep(wait)
@@ -151,7 +163,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
             except Exception as e:
                 logger.exception(f"Unexpected error in _call_vlm_api_resilient: {e}")
                 return None, str(e)
-        return None, "Max retries reached"
+        return None, f"Max retries reached: {last_error_msg}"
 
     def _process_card_sync(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600) -> Dict[str, Any]:
         """Synchronous card processing logic."""
