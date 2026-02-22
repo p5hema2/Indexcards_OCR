@@ -3,14 +3,16 @@ import { useWizardStore } from '../../store/wizardStore';
 
 interface MagnifierState {
   visible: boolean;
-  x: number; // cursor x relative to image container (0-1)
-  y: number; // cursor y relative to image container (0-1)
+  x: number; // cursor x relative to actual image (0-1)
+  y: number; // cursor y relative to actual image (0-1)
   containerX: number; // cursor px relative to container left
   containerY: number; // cursor px relative to container top
+  imgWidth: number; // actual rendered image width
+  imgHeight: number; // actual rendered image height
 }
 
-const MAGNIFIER_SIZE = 200;
-const ZOOM_FACTOR = 3.5;
+const MAGNIFIER_SIZE = 220;
+const ZOOM_FACTOR = 5;
 
 export const ImagePreview: React.FC = () => {
   const { files } = useWizardStore();
@@ -22,19 +24,46 @@ export const ImagePreview: React.FC = () => {
     y: 0,
     containerX: 0,
     containerY: 0,
+    imgWidth: 0,
+    imgHeight: 0,
   });
 
   const firstFile = files[0];
   const preview = firstFile?.preview;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const containerX = e.clientX - rect.left;
-    const containerY = e.clientY - rect.top;
-    const x = containerX / rect.width;
-    const y = containerY / rect.height;
-    setMagnifier({ visible: true, x, y, containerX, containerY });
+    if (!containerRef.current || !imgRef.current) return;
+
+    const imgRect = imgRef.current.getBoundingClientRect();
+
+    // Cursor position relative to the actual rendered image
+    const imgX = e.clientX - imgRect.left;
+    const imgY = e.clientY - imgRect.top;
+
+    // Normalized (0-1) within the image
+    const x = imgX / imgRect.width;
+    const y = imgY / imgRect.height;
+
+    // Only show magnifier when cursor is over the actual image
+    if (x < 0 || x > 1 || y < 0 || y > 1) {
+      setMagnifier((prev) => ({ ...prev, visible: false }));
+      return;
+    }
+
+    // Container-relative position for lens placement
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const containerX = e.clientX - containerRect.left;
+    const containerY = e.clientY - containerRect.top;
+
+    setMagnifier({
+      visible: true,
+      x,
+      y,
+      containerX,
+      containerY,
+      imgWidth: imgRect.width,
+      imgHeight: imgRect.height,
+    });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -42,6 +71,15 @@ export const ImagePreview: React.FC = () => {
   }, []);
 
   if (!firstFile) return null;
+
+  // Clamp lens position so it doesn't overflow the container
+  const half = MAGNIFIER_SIZE / 2;
+  const lensLeft = magnifier.containerX - half;
+  const lensTop = magnifier.containerY - half;
+
+  // Zoomed image pixel dimensions
+  const zoomedW = magnifier.imgWidth * ZOOM_FACTOR;
+  const zoomedH = magnifier.imgHeight * ZOOM_FACTOR;
 
   return (
     <div className="space-y-2">
@@ -51,7 +89,7 @@ export const ImagePreview: React.FC = () => {
 
       <div
         ref={containerRef}
-        className="relative rounded border border-parchment-dark/50 overflow-hidden bg-parchment-light/30 parchment-shadow cursor-crosshair"
+        className="relative rounded border border-parchment-dark/50 bg-parchment-light/30 parchment-shadow cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
@@ -67,25 +105,24 @@ export const ImagePreview: React.FC = () => {
             {/* Magnifier lens */}
             {magnifier.visible && (
               <div
-                className="absolute pointer-events-none rounded-full border-2 border-archive-sepia/60 overflow-hidden shadow-lg"
+                className="absolute pointer-events-none rounded-full border-2 border-archive-sepia/60 overflow-hidden shadow-lg z-10"
                 style={{
                   width: MAGNIFIER_SIZE,
                   height: MAGNIFIER_SIZE,
-                  left: magnifier.containerX - MAGNIFIER_SIZE / 2,
-                  top: magnifier.containerY - MAGNIFIER_SIZE / 2,
+                  left: lensLeft,
+                  top: lensTop,
                 }}
               >
                 <img
                   src={preview}
                   alt=""
                   style={{
-                    width: `${ZOOM_FACTOR * 100}%`,
-                    height: `${ZOOM_FACTOR * 100}%`,
+                    width: zoomedW,
+                    height: zoomedH,
                     maxWidth: 'none',
                     position: 'absolute',
-                    left: `${-magnifier.x * ZOOM_FACTOR * 100 + 50}%`,
-                    top: `${-magnifier.y * ZOOM_FACTOR * 100 + 50}%`,
-                    objectFit: 'contain',
+                    left: half - magnifier.x * zoomedW,
+                    top: half - magnifier.y * zoomedH,
                   }}
                 />
               </div>
