@@ -3,6 +3,7 @@ import { Play, Archive, Info } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import { TemplateSelector } from './TemplateSelector';
 import { FieldManager } from './FieldManager';
+import { PromptTemplateEditor } from './PromptTemplateEditor';
 import { ImagePreview } from './ImagePreview';
 import { useCreateBatchMutation, useStartBatchMutation } from '../../api/batchesApi';
 import { toast } from 'sonner';
@@ -112,8 +113,11 @@ export const ConfigureStep: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 space-y-6">
           <FieldManager />
+          <div className="mt-6">
+            <PromptTemplateEditor />
+          </div>
         </div>
       </div>
 
