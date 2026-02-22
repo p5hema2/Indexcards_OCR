@@ -12,6 +12,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         ws: true,
+        rewriteWsOrigin: true,
       },
       '/batches-static': {
         target: 'http://localhost:8000',
