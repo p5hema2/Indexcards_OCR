@@ -58,6 +58,16 @@ Plans:
 - [ ] 03-02-PLAN.md — Processing step: Zustand extension, WebSocket hook, ProgressBar, LiveFeed, cancel, catastrophic failure detection.
 - [ ] 03-03-PLAN.md — Results step: TanStack sortable/editable table, thumbnails with lightbox, retry, CSV/JSON export.
 
+### Phase 03.1: Dynamic prompt generation from field definitions with configurable prompt template (INSERTED)
+
+**Goal:** Add an optional `prompt_template` field to templates and batches, wire it through the backend OCR pipeline with `{{fields}}` placeholder substitution, and surface a collapsible prompt editor with live preview in the Configure step UI.
+**Depends on:** Phase 3
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03.1-01-PLAN.md — Schema + codegen + Pydantic models + backend pipeline wiring (batch_manager, ocr_engine, batches endpoint).
+- [ ] 03.1-02-PLAN.md — Frontend: Zustand store, API layers, PromptTemplateEditor component, ConfigureStep/TemplateSelector/FieldManager integration.
+
 ## Phase 4: Refinement & Polish
 - [ ] Enhance error handling in the GUI (e.g., failed images list).
 - [ ] Optimize image resizing logic in the backend.
