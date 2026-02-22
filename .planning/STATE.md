@@ -1,10 +1,10 @@
 # Project State
 
 ## Current Phase
-Phase 01: Backend Foundation (gap closure plans) — COMPLETE
+Phase 01: Backend Foundation (UAT gap closure round 2)
 
 ## Current Plan
-01-06: COMPLETE — Batch History Dashboard: GET /history + DELETE /{name} endpoints, BatchHistoryDashboard, BatchHistoryCard, AppView routing in wizardStore, sidebar/header navigation
+01-07, 01-08, 01-09: PENDING — Gap closure plans from UAT round 2 (blocker + major + minor)
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -27,7 +27,7 @@ Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 - [x] Phase 01 Plan 06 (gap closure): Batch History Dashboard — GET /history, DELETE /{name}, BatchHistoryDashboard + BatchHistoryCard, AppView routing.
 
 ## Active Tasks
-- [x] Execute Phase 01 Plan 06: Batch History Dashboard.
+- [ ] Execute Phase 01 Plans 07-09: UAT gap closure round 2.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
