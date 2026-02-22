@@ -24,6 +24,7 @@ export const PromptTemplateEditor: React.FC = () => {
   const effectiveTemplate = promptTemplate ?? DEFAULT_TEMPLATE;
   const [localTemplate, setLocalTemplate] = useState(effectiveTemplate);
   const isLocalEdit = useRef(false);
+  const isUserTyping = useRef(false);
 
   // Sync store → local when store changes externally (e.g., template load)
   useEffect(() => {
@@ -33,9 +34,11 @@ export const PromptTemplateEditor: React.FC = () => {
     isLocalEdit.current = false;
   }, [promptTemplate]);
 
-  // Debounced local → store write (300ms)
+  // Debounced local → store write (300ms) — only for user edits
   useEffect(() => {
+    if (!isUserTyping.current) return;
     const timeout = setTimeout(() => {
+      isUserTyping.current = false;
       const storeValue = localTemplate === DEFAULT_TEMPLATE ? null : localTemplate || null;
       if (storeValue !== promptTemplate) {
         isLocalEdit.current = true;
@@ -95,7 +98,7 @@ export const PromptTemplateEditor: React.FC = () => {
             <textarea
               className="w-full h-48 font-mono text-sm bg-parchment-light/30 border border-parchment-dark/50 rounded p-3 focus:outline-none focus:border-archive-sepia/50 resize-y"
               value={localTemplate}
-              onChange={(e) => setLocalTemplate(e.target.value)}
+              onChange={(e) => { isUserTyping.current = true; setLocalTemplate(e.target.value); }}
             />
           )}
 
