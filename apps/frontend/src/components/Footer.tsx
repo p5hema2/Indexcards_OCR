@@ -9,7 +9,7 @@ export const Footer: React.FC = () => {
   const sizeFormatted = (totalSize / (1024 * 1024)).toFixed(1);
 
   return (
-    <footer className="h-10 border-t border-parchment-dark bg-parchment-dark/50 flex items-center justify-between px-6 sticky bottom-0 z-10 text-[11px] uppercase tracking-widest font-mono text-archive-ink/60">
+    <footer className="h-10 border-t border-parchment-dark bg-parchment flex items-center justify-between px-6 sticky bottom-0 z-20 text-[11px] uppercase tracking-widest font-mono text-archive-ink/60">
       <div className="flex items-center gap-6">
         <span>{files.length} Files</span>
         <span className="w-px h-3 bg-parchment-dark"></span>

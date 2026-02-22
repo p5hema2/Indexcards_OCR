@@ -17,7 +17,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 border-b border-parchment-dark flex items-center justify-between px-6 bg-parchment/80 backdrop-blur-sm sticky top-0 z-10">
+    <header className="h-16 border-b border-parchment-dark flex items-center justify-between px-6 bg-parchment sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-archive-sepia rounded-sm flex items-center justify-center">
           <span className="text-parchment text-lg font-bold">I</span>
