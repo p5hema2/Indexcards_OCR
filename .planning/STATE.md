@@ -1,12 +1,10 @@
 # Project State
 
 ## Current Phase
-Phase 03: Processing & Results (React) — COMPLETE
+Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 
 ## Current Plan
-03-01: COMPLETE — Backend prerequisites (results/cancel/retry-image endpoints + StaticFiles)
-03-02: COMPLETE — Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure
-03-03: COMPLETE — Results step (React): sortable table, inline editing, thumbnails, lightbox, export
+01-05: COMPLETE — Template Save/Delete UI: useCreateTemplateMutation, useDeleteTemplateMutation, SaveTemplateDialog, TemplateSelector custom dropdown with delete buttons, ImagePreview with hover magnifier
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -25,10 +23,10 @@ Phase 03: Processing & Results (React) — COMPLETE
 - [x] Phase 03 Plan 02: Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure.
 - [x] Phase 03 Plan 03: Results step (React): sortable/editable table, thumbnails, lightbox, CSV/JSON export.
 - [x] Phase 01 Plan 04 (gap closure): Fixed health endpoint double-prefix bug and Vite WS proxy for UAT tests 1 and 5.
+- [x] Phase 01 Plan 05 (gap closure): Template Save/Delete UI + ImagePreview with magnifier for UAT test 4.
 
 ## Active Tasks
-- [x] Execute Phase 03 Plan 02: Processing step (React).
-- [x] Execute Phase 03 Plan 03: Results step (React).
+- [x] Execute Phase 01 Plan 05: Template Save/Delete UI and image preview with magnifier.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -66,10 +64,13 @@ Phase 03: Processing & Results (React) — COMPLETE
 - **retryImage navigates to processing step:** single-image retry starts new WS stream; retryBatch used for bulk retry (POST /retry).
 - **FastAPI router prefix pattern:** include_router(router, prefix='/x') + @router.get('/') resolves to /x (not /x/x); decorator must be '/' not the route name.
 - **Vite 7 WS proxy:** rewriteWsOrigin:true required in addition to changeOrigin:true for WebSocket upgrade origin rewriting (http-proxy-3 behaviour).
+- **Custom div dropdown for TemplateSelector:** HTML <select> cannot render custom markup inside <option>, so refactored to div-based dropdown with per-row Trash2 delete button.
+- **Magnifier uses pure CSS/JS (no library):** Overlaid scaled <img> positioned from cursor's relative x/y in container; 150px lens, 2.5x zoom factor.
+- **ImagePreview reads blob URL from Zustand:** Temp session files are not served by StaticFiles; blob URLs created during upload step via URL.createObjectURL. Falls back to placeholder text if undefined.
 
 ## Last Session
-Stopped at: Phase 01 Plan 04 complete (gap closure: health endpoint double-prefix fix + Vite WS proxy rewriteWsOrigin)
-Resume file: .planning/phases/01-backend-foundation/01-04-SUMMARY.md
+Stopped at: Phase 01 Plan 05 complete (Template Save/Delete UI + ImagePreview with hover magnifier for UAT test 4)
+Resume file: .planning/phases/01-backend-foundation/01-05-SUMMARY.md
 
 ## Accumulated Context
 
@@ -82,6 +83,7 @@ Resume file: .planning/phases/01-backend-foundation/01-04-SUMMARY.md
 - Phase 03 Plan 02 complete: ProcessingStep with native WebSocket, ProgressBar, LiveFeed, cancel, 3-strike catastrophic failure, Zustand partialize
 - Phase 03 Plan 03 complete: ResultsStep with TanStack Table, editable cells, YARL thumbnails, CSV/JSON export — full wizard end-to-end
 - Phase 01 Plan 04 (gap closure) complete: fixed health endpoint double-prefix (/health/health -> /health) and added rewriteWsOrigin:true to Vite proxy for WS upgrade forwarding
+- Phase 01 Plan 05 (gap closure) complete: template save/delete UI (SaveTemplateDialog, custom TemplateSelector dropdown, FieldManager Save button) + ImagePreview with 2.5x magnifier in Configure step sidebar
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -93,6 +95,7 @@ Resume file: .planning/phases/01-backend-foundation/01-04-SUMMARY.md
 | 03    | 02   | ~2min    | 2     | 7     |
 | 03    | 03   | ~3min    | 2     | 7     |
 | 01    | 04   | ~5min    | 1     | 2     |
+| 01    | 05   | ~2min    | 2     | 6     |
 
 ## Blockers
 - None.
