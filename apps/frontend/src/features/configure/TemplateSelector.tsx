@@ -19,7 +19,7 @@ export const TemplateSelector: React.FC = () => {
     toast.info('Cleared all extraction fields.');
   };
 
-  const handleSelectTemplate = (id: string, name: string, fields: string[]) => {
+  const handleSelectTemplate = (_id: string, name: string, fields: string[]) => {
     const newFields: MetadataField[] = fields.map((field) => ({
       id: Math.random().toString(36).substring(2, 11),
       label: field,

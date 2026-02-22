@@ -53,7 +53,6 @@ export const ResultsStep: React.FC = () => {
   const fieldLabels = fields.map((f) => f.label);
 
   // Computed summary stats
-  const successCount = results.filter((r) => r.status === 'success').length;
   const failedCount = results.filter((r) => r.status === 'failed').length;
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
 
@@ -148,7 +147,6 @@ export const ResultsStep: React.FC = () => {
       <ResultsTable
         results={results}
         fields={fieldLabels}
-        batchName={batchId ?? ''}
         onRetryImage={handleRetryImage}
         isProcessing={isProcessing}
       />

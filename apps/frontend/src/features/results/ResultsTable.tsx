@@ -90,7 +90,6 @@ const EditableCell: React.FC<EditableCellProps> = ({ value, isEdited, onCommit }
 interface ResultsTableProps {
   results: ResultRow[];
   fields: string[];
-  batchName: string;
   onRetryImage: (filename: string) => void;
   isProcessing: boolean;
 }
@@ -98,7 +97,6 @@ interface ResultsTableProps {
 export const ResultsTable: React.FC<ResultsTableProps> = ({
   results,
   fields,
-  batchName,
   onRetryImage,
   isProcessing,
 }) => {
@@ -107,7 +105,8 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
 
   const columnHelper = createColumnHelper<ResultRow>();
 
-  const columns: ColumnDef<ResultRow, unknown>[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns: ColumnDef<ResultRow, any>[] = [
     // Filename column
     columnHelper.accessor('filename', {
       header: 'File',
