@@ -8,7 +8,7 @@ import logging
 from app.services.batch_manager import batch_manager
 from app.services.ocr_engine import ocr_engine
 from app.services.ws_manager import ws_manager
-from app.models.schemas import BatchCreate, BatchHistoryItem, BatchResponse
+from app.models.schemas import BatchCreate, BatchHistoryItem, BatchProgress, BatchResponse
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,17 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
             else:
                 last_state.status = "completed"
             await ws_manager.broadcast_progress(batch_name, last_state)
+        else:
+            # Edge case: no progress was ever broadcast — send completed/cancelled with zeroed progress
+            status = "cancelled" if cancel_event.is_set() else "completed"
+            final_state = BatchProgress(
+                batch_name=batch_name,
+                current=0,
+                total=0,
+                percentage=0.0,
+                status=status,
+            )
+            await ws_manager.broadcast_progress(batch_name, final_state)
 
     except Exception as e:
         logger.exception(f"Error in background OCR task for {batch_name}: {e}")
@@ -62,6 +73,16 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
         if last_state:
             last_state.status = "failed"
             await ws_manager.broadcast_progress(batch_name, last_state)
+        else:
+            # No progress was ever broadcast — create minimal failed state
+            failed_state = BatchProgress(
+                batch_name=batch_name,
+                current=0,
+                total=0,
+                percentage=0.0,
+                status="failed",
+            )
+            await ws_manager.broadcast_progress(batch_name, failed_state)
     finally:
         # Clean up cancel event after the task ends (success, cancel, or failure)
         ws_manager.clear_cancel_event(batch_name)
