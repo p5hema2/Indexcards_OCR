@@ -25,7 +25,7 @@ class BatchManager:
         session_path.mkdir(parents=True, exist_ok=True)
         return session_path
 
-    def create_batch(self, custom_name: str, session_id: str, fields: Optional[List[str]] = None) -> str:
+    def create_batch(self, custom_name: str, session_id: str, fields: Optional[List[str]] = None, prompt_template: Optional[str] = None) -> str:
         """
         Moves files from temp session to a new permanent batch directory.
         Returns the generated batch name.
@@ -47,6 +47,7 @@ class BatchManager:
         config_data = {
             "custom_name": custom_name,
             "fields": fields or settings.FIELD_KEYS,
+            "prompt_template": prompt_template,
             "created_at": datetime.now().isoformat()
         }
         with open(batch_path / "config.json", "w") as f:

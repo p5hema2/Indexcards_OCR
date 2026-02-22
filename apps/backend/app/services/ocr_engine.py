@@ -75,17 +75,28 @@ class OcrEngine:
         ]
         return any(re.match(p, signature) for p in patterns)
 
-    def _generate_prompt(self, fields: List[str]) -> str:
-        """Generiert einen dynamischen Prompt basierend auf den gewünschten Feldern."""
-        fields_description = "\n".join([f"{i+1}. **{field}**: Extrahiere den Wert für das Feld '{field}'." for i, field in enumerate(fields)])
-        
+    def _generate_prompt(self, fields: List[str], template: Optional[str] = None) -> str:
+        """Generiert einen dynamischen Prompt basierend auf den gewünschten Feldern.
+
+        If template is provided, renders it by substituting {{fields}} with the fields block.
+        If {{fields}} is not present in the template, the fields block is appended.
+        If template is None, falls back to the default hardcoded German prompt.
+        """
+        fields_block = "\n".join([f"{i+1}. **{field}**: Extrahiere den Wert für das Feld '{field}'." for i, field in enumerate(fields)])
+
+        if template is not None:
+            if "{{fields}}" in template:
+                return template.replace("{{fields}}", fields_block)
+            else:
+                return template + "\n\n" + fields_block
+
         return f"""Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten aus dem Bereich Musik.
 
-Deine Aufgabe ist es, die Informationen von der Karteikarte präzise zu extrahieren. 
+Deine Aufgabe ist es, die Informationen von der Karteikarte präzise zu extrahieren.
 Achte besonders auf die Handschrift und mögliche Streichungen.
 
 **Extrahiere folgende Felder:**
-{fields_description}
+{fields_block}
 
 Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden kann, verwende einen leeren String ("").
 Ändere nichts an der Schreibweise historischer Begriffe, außer bei offensichtlichen Tippfehlern.
@@ -93,15 +104,15 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 **AUSGABEFORMAT:** Antworte NUR mit einem validen JSON-Objekt.
 """
 
-    def _call_vlm_api_resilient(self, image_path: Path, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600) -> Tuple[Optional[Dict], Optional[str]]:
+    def _call_vlm_api_resilient(self, image_path: Path, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Tuple[Optional[Dict], Optional[str]]:
         """Resilienter API-Aufruf: Session, exponential backoff with jitter."""
         if not self.api_key:
             return None, "API Key missing"
-            
+
         base64_image = self._encode_image_to_base64(image_path, max_size=max_size)
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        
-        prompt = self._generate_prompt(fields) if fields else settings.EXTRACTION_PROMPT
+
+        prompt = self._generate_prompt(fields, template=prompt_template) if fields else settings.EXTRACTION_PROMPT
         
         payload = {
             "model": settings.MODEL_NAME,
@@ -165,12 +176,12 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 return None, str(e)
         return None, f"Max retries reached: {last_error_msg}"
 
-    def _process_card_sync(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600) -> Dict[str, Any]:
+    def _process_card_sync(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Dict[str, Any]:
         """Synchronous card processing logic."""
         start_time = time.time()
         filename = image_path.name
         try:
-            data, error = self._call_vlm_api_resilient(image_path, fields=fields, max_size=max_size)
+            data, error = self._call_vlm_api_resilient(image_path, fields=fields, max_size=max_size, prompt_template=prompt_template)
             duration = time.time() - start_time
             
             if error:
@@ -213,9 +224,9 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 "duration": time.time() - start_time
             }
 
-    async def process_card(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600) -> Dict[str, Any]:
+    async def process_card(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Dict[str, Any]:
         """Async wrapper for process_card_sync."""
-        return await asyncio.to_thread(self._process_card_sync, image_path, batch_name, fields, max_size)
+        return await asyncio.to_thread(self._process_card_sync, image_path, batch_name, fields, max_size, prompt_template)
 
     async def process_batch(
         self,
@@ -225,6 +236,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
         progress_callback: Optional[Callable[[str, Any], Any]] = None,
         resume: bool = True,
         cancel_event: Optional[threading.Event] = None,
+        prompt_template: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Processes an entire batch of images asynchronously using a thread pool."""
         batch_name = batch_dir.name
@@ -279,7 +291,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 
             with ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
                 futures = {
-                    executor.submit(self._process_card_sync, img, batch_name, fields, max_size): img
+                    executor.submit(self._process_card_sync, img, batch_name, fields, max_size, prompt_template): img
                     for img in files_to_process
                 }
                 for i, fut in enumerate(as_completed(futures), len(completed_files) + 1):

@@ -25,10 +25,12 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
         config_path = batch_path / "config.json"
 
         fields = None
+        prompt_template = None
         if config_path.exists():
             with open(config_path, "r") as f:
                 config = json.load(f)
                 fields = config.get("fields")
+                prompt_template = config.get("prompt_template")
 
         # If retry_errors is True, move files back from _errors so ocr_engine can process them.
         if retry_errors:
@@ -44,6 +46,7 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
             progress_callback=ws_manager.broadcast_progress,
             resume=resume,
             cancel_event=cancel_event,
+            prompt_template=prompt_template,
         )
 
         # Mark as completed (or cancelled) in a final progress update
@@ -101,7 +104,8 @@ async def create_batch(batch_data: BatchCreate):
         batch_name = batch_manager.create_batch(
             custom_name=batch_data.custom_name,
             session_id=batch_data.session_id,
-            fields=batch_data.fields
+            fields=batch_data.fields,
+            prompt_template=batch_data.prompt_template,
         )
 
         batch_path = batch_manager.get_batch_path(batch_name)
