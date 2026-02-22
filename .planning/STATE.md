@@ -4,7 +4,7 @@
 Phase 03.1: Dynamic Prompt Generation from Field Definitions with Configurable Prompt Template
 
 ## Current Plan
-Plan 01 complete (prompt_template data models + pipeline wiring). Ready for Phase 03.1 Plan 02 or UAT.
+Plan 02 complete (PromptTemplateEditor UI + full frontend data flow wiring). Phase 03.1 fully complete. Ready for UAT.
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -86,11 +86,14 @@ Plan 01 complete (prompt_template data models + pipeline wiring). Ready for Phas
 - **prompt_template uses {{fields}} substitution with append fallback:** if placeholder absent in template, fields block appended after two newlines; null/absent means existing hardcoded German prompt.
 - **prompt_template read via config.get() in run_ocr_task:** backward compatibility with existing config.json files that lack the key — no migration required.
 - **process_batch prompt_template at end of signature:** avoids breaking existing callers that use positional args for earlier parameters.
+- **DEFAULT_TEMPLATE in PromptTemplateEditor matches ocr_engine.py exactly:** null sentinel correctly identifies when user has reset to default; no duplicate string stored.
+- **PromptTemplateEditor collapsed by default:** non-intrusive for users who don't need prompt customization; power-user feature discoverable via expand toggle.
+- **null-means-default pattern throughout:** null in Zustand store = backend uses its own hardcoded German prompt; non-null = custom override sent via API.
 
 ## Last Session
-Stopped at: Completed Phase 03.1 Plan 01 — prompt_template data models and OCR pipeline wiring
+Stopped at: Completed Phase 03.1 Plan 02 — PromptTemplateEditor UI + full frontend prompt_template data flow
 Resume file: .planning/STATE.md
-Timestamp: 2026-02-22T15:31:00Z
+Timestamp: 2026-02-22T15:39:00Z
 
 ## Accumulated Context
 
@@ -112,6 +115,7 @@ Timestamp: 2026-02-22T15:31:00Z
 - Phase 02 Plan 05 (gap closure) complete: WizardNav sticky bottom nav component; inline buttons removed from Upload, Configure, Results steps; ProcessingStep unchanged
 - Phase 03.1 inserted after Phase 3: Dynamic prompt generation from field definitions with configurable prompt template (URGENT)
 - Phase 03.1 Plan 01 complete: prompt_template added to all 5 data model types (schema, TS, Python, Pydantic) and wired end-to-end through OCR pipeline with {{fields}} substitution and backward-compat fallback.
+- Phase 03.1 Plan 02 complete: PromptTemplateEditor React component with live preview, Zustand promptTemplate state, prompt_template wired through all frontend API calls (template save/load + batch creation).
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -131,6 +135,7 @@ Timestamp: 2026-02-22T15:31:00Z
 | 02    | 04   | ~2min    | 1     | 1     |
 | 02    | 05   | ~5min    | 2     | 4     |
 | 03.1  | 01   | ~4min    | 2     | 9     |
+| 03.1  | 02   | ~5min    | 2     | 7     |
 
 ## Blockers
 - None.
