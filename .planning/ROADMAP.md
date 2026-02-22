@@ -9,9 +9,9 @@
 - [x] 01-04-PLAN.md — Gap closure: fix health endpoint double prefix and WebSocket proxy.
 - [x] 01-05-PLAN.md — Gap closure: template save/delete UI and image preview with magnifier.
 - [x] 01-06-PLAN.md — Gap closure: batch history backend endpoints and frontend dashboard.
-- [ ] 01-07-PLAN.md — Gap closure: fix asyncio event loop bug + silent failure (BLOCKER).
-- [ ] 01-08-PLAN.md — Gap closure: temp session cleanup to prevent server pollution (MAJOR).
-- [ ] 01-09-PLAN.md — Gap closure: larger image preview and magnifier for A5 cards (MINOR).
+- [x] 01-07-PLAN.md — Gap closure: fix asyncio event loop bug + silent failure (BLOCKER).
+- [x] 01-08-PLAN.md — Gap closure: temp session cleanup to prevent server pollution (MAJOR).
+- [x] 01-09-PLAN.md — Gap closure: larger image preview and magnifier for A5 cards (MINOR).
 
 **Requirements:**
 - [x] [BACKEND-01] Initialize FastAPI project structure (app, models, services).
