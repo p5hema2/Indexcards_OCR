@@ -4,8 +4,7 @@
 Phase 02: Frontend Scaffold & Configuration (React) — UAT gap closure
 
 ## Current Plan
-02-04: COMPLETE — Gap closure: sidebar back-navigation to completed steps
-02-05: PENDING — Gap closure: sticky floating WizardNav bar
+02-05: COMPLETE — Gap closure: sticky floating WizardNav bar
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -29,9 +28,11 @@ Phase 02: Frontend Scaffold & Configuration (React) — UAT gap closure
 - [x] Phase 01 Plan 09 (gap closure): Image preview 200px magnifier at 3.5x zoom, 500px max-height for A5 cards.
 - [x] Phase 01 Plan 08 (gap closure): Temp session cleanup — startup stale removal + DELETE /upload/{session_id}.
 - [x] Phase 01 Plan 07 (gap closure): BLOCKER fix — asyncio event loop capture + silent failure broadcast in batches.py.
+- [x] Phase 02 Plan 04 (gap closure): Sidebar back-navigation to completed steps.
+- [x] Phase 02 Plan 05 (gap closure): WizardNav sticky bottom navigation bar on Upload, Configure, Results steps.
 
 ## Active Tasks
-- Execute 02-05-PLAN.md (sticky WizardNav) — gap closure from UAT user feedback.
+- All UAT gap closure plans complete. Ready for UAT re-verification.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -81,10 +82,11 @@ Phase 02: Frontend Scaffold & Configuration (React) — UAT gap closure
 - **Modern FastAPI lifespan over deprecated on_event:** asynccontextmanager lifespan is the recommended pattern; on_event("startup") is deprecated.
 - **24-hour default for stale session cleanup:** configurable via max_age_hours parameter; runs on every server startup.
 - **Sidebar step clickability guard in component (not store):** handleStepClick in Sidebar guards processing/results from sidebar navigation; setStep in store remains unrestricted so loadBatchForReview and other callers work freely.
+- **WizardNav uses sticky bottom-0 (not fixed):** nav bar stays within main scroll container and does not overlap the Footer; ProcessingStep excluded from WizardNav.
 
 ## Last Session
-Stopped at: Completed 02-04-PLAN.md (sidebar back-navigation to completed steps)
-Resume file: .planning/phases/02-frontend-scaffold-configuration-react/02-05-PLAN.md
+Stopped at: Completed 02-05-PLAN.md (sticky WizardNav bottom navigation bar)
+Resume file: .planning/STATE.md
 
 ## Accumulated Context
 
@@ -102,6 +104,8 @@ Resume file: .planning/phases/02-frontend-scaffold-configuration-react/02-05-PLA
 - Phase 01 Plan 09 (gap closure) complete: image preview 200px magnifier at 3.5x zoom, 500px max-height for A5 index card readability
 - Phase 01 Plan 08 (gap closure) complete: startup stale session cleanup (24h threshold) + DELETE /upload/{session_id} endpoint for explicit frontend teardown
 - Phase 01 Plan 07 (gap closure) complete: BLOCKER fix — asyncio event loop capture in async context + fallback BatchProgress broadcast on all exit paths
+- Phase 02 Plan 04 (gap closure) complete: Sidebar clickability enabled for completed steps; handleStepClick guard in Sidebar.tsx; setStep in store remains unrestricted
+- Phase 02 Plan 05 (gap closure) complete: WizardNav sticky bottom nav component; inline buttons removed from Upload, Configure, Results steps; ProcessingStep unchanged
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -119,6 +123,7 @@ Resume file: .planning/phases/02-frontend-scaffold-configuration-react/02-05-PLA
 | 01    | 08   | ~2min    | 2     | 3     |
 | 01    | 07   | ~2min    | 2     | 2     |
 | 02    | 04   | ~2min    | 1     | 1     |
+| 02    | 05   | ~5min    | 2     | 4     |
 
 ## Blockers
 - None.
