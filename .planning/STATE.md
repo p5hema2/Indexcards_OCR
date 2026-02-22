@@ -24,6 +24,7 @@ Phase 03: Processing & Results (React) — COMPLETE
 - [x] Phase 03 Plan 01: Backend prerequisites for Processing & Results (results/cancel/retry-image + StaticFiles).
 - [x] Phase 03 Plan 02: Processing step (React): WebSocket, ProgressBar, LiveFeed, cancel, catastrophic failure.
 - [x] Phase 03 Plan 03: Results step (React): sortable/editable table, thumbnails, lightbox, CSV/JSON export.
+- [x] Phase 01 Plan 04 (gap closure): Fixed health endpoint double-prefix bug and Vite WS proxy for UAT tests 1 and 5.
 
 ## Active Tasks
 - [x] Execute Phase 03 Plan 02: Processing step (React).
@@ -63,10 +64,12 @@ Phase 03: Processing & Results (React) — COMPLETE
 - **Merge editedData on results hydration:** fresh API data overwrites data fields but editedData map is preserved within session.
 - **Tailwind JIT status color lookup map:** static statusStyles object instead of template literals to avoid JIT purge.
 - **retryImage navigates to processing step:** single-image retry starts new WS stream; retryBatch used for bulk retry (POST /retry).
+- **FastAPI router prefix pattern:** include_router(router, prefix='/x') + @router.get('/') resolves to /x (not /x/x); decorator must be '/' not the route name.
+- **Vite 7 WS proxy:** rewriteWsOrigin:true required in addition to changeOrigin:true for WebSocket upgrade origin rewriting (http-proxy-3 behaviour).
 
 ## Last Session
-Stopped at: Phase 03 Plan 03 complete (Results step React: sortable table, inline editing, thumbnails, lightbox, CSV/JSON export)
-Resume file: .planning/phases/03-processing-results-react/03-03-SUMMARY.md
+Stopped at: Phase 01 Plan 04 complete (gap closure: health endpoint double-prefix fix + Vite WS proxy rewriteWsOrigin)
+Resume file: .planning/phases/01-backend-foundation/01-04-SUMMARY.md
 
 ## Accumulated Context
 
@@ -78,6 +81,7 @@ Resume file: .planning/phases/03-processing-results-react/03-03-SUMMARY.md
 - Phase 03 Plan 01 complete: backend prerequisites for Processing & Results frontend plans
 - Phase 03 Plan 02 complete: ProcessingStep with native WebSocket, ProgressBar, LiveFeed, cancel, 3-strike catastrophic failure, Zustand partialize
 - Phase 03 Plan 03 complete: ResultsStep with TanStack Table, editable cells, YARL thumbnails, CSV/JSON export — full wizard end-to-end
+- Phase 01 Plan 04 (gap closure) complete: fixed health endpoint double-prefix (/health/health -> /health) and added rewriteWsOrigin:true to Vite proxy for WS upgrade forwarding
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -88,6 +92,7 @@ Resume file: .planning/phases/03-processing-results-react/03-03-SUMMARY.md
 | 03    | 01   | ~8min    | 2     | 5     |
 | 03    | 02   | ~2min    | 2     | 7     |
 | 03    | 03   | ~3min    | 2     | 7     |
+| 01    | 04   | ~5min    | 1     | 2     |
 
 ## Blockers
 - None.
