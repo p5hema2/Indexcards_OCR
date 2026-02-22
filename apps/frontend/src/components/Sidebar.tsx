@@ -14,6 +14,7 @@ export const Sidebar: React.FC = () => {
   const activeStep = useWizardStore((state) => state.step);
   const view = useWizardStore((state) => state.view);
   const setView = useWizardStore((state) => state.setView);
+  const setStep = useWizardStore((state) => state.setStep);
   const resetWizard = useWizardStore((state) => state.resetWizard);
 
   const getStepStatus = (stepKey: WizardStep) => {
@@ -25,6 +26,15 @@ export const Sidebar: React.FC = () => {
     if (currentIndex < activeIndex) return 'complete';
     if (currentIndex === activeIndex) return 'active';
     return 'pending';
+  };
+
+  const handleStepClick = (stepKey: WizardStep) => {
+    // Only allow navigating back to upload or configure — never to processing or results via sidebar
+    if (stepKey === 'processing' || stepKey === 'results') return;
+    const status = getStepStatus(stepKey);
+    if (status === 'complete') {
+      setStep(stepKey);
+    }
   };
 
   const handleShowArchive = () => {
@@ -44,14 +54,17 @@ export const Sidebar: React.FC = () => {
         const status = getStepStatus(step.key);
         const isActive = status === 'active';
         const isComplete = status === 'complete';
+        const isClickable = isComplete && step.key !== 'processing' && step.key !== 'results';
 
         return (
           <div
             key={step.key}
+            onClick={isClickable ? () => handleStepClick(step.key) : undefined}
             className={`
               flex items-center gap-3 px-3 py-4 rounded transition-all duration-300
               ${isActive ? 'bg-parchment-dark text-archive-ink parchment-shadow' : 'text-archive-ink/40'}
               ${isComplete ? 'text-archive-ink/70' : ''}
+              ${isClickable ? 'cursor-pointer hover:bg-parchment-dark/40 hover:text-archive-ink' : 'cursor-default'}
             `}
           >
             <div className={`
