@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { WizardNav } from '../../components/WizardNav';
 
 export const ConfigureStep: React.FC = () => {
-  const { files, fields, sessionId, setStep, setBatchId } = useWizardStore();
+  const { files, fields, sessionId, setStep, setBatchId, promptTemplate } = useWizardStore();
   const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 10)}`);
 
   const createBatchMutation = useCreateBatchMutation();
@@ -44,6 +44,7 @@ export const ConfigureStep: React.FC = () => {
         custom_name: batchName.trim(),
         session_id: sessionId,
         fields: fieldLabels,
+        prompt_template: promptTemplate,
       },
       {
         onSuccess: (data) => {

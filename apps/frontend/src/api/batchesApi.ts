@@ -7,6 +7,7 @@ export interface BatchCreate {
   custom_name: string;
   session_id: string;
   fields: string[];
+  prompt_template?: string | null;
 }
 
 export interface BatchResponse {

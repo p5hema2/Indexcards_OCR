@@ -6,7 +6,7 @@ import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
 
 export const TemplateSelector: React.FC = () => {
-  const { setFields } = useWizardStore();
+  const { setFields, setPromptTemplate } = useWizardStore();
   const { data: templates, isLoading } = useTemplatesQuery();
   const deleteTemplateMutation = useDeleteTemplateMutation();
   const [isOpen, setIsOpen] = useState(false);
@@ -14,18 +14,20 @@ export const TemplateSelector: React.FC = () => {
 
   const handleSelectBlank = () => {
     setFields([]);
+    setPromptTemplate(null);
     setSelectedLabel('Custom / Blank Slate');
     setIsOpen(false);
     toast.info('Cleared all extraction fields.');
   };
 
-  const handleSelectTemplate = (_id: string, name: string, fields: string[]) => {
+  const handleSelectTemplate = (_id: string, name: string, fields: string[], promptTemplate?: string | null) => {
     const newFields: MetadataField[] = fields.map((field) => ({
       id: Math.random().toString(36).substring(2, 11),
       label: field,
       type: 'text',
     }));
     setFields(newFields);
+    setPromptTemplate(promptTemplate ?? null);
     setSelectedLabel(name);
     setIsOpen(false);
     toast.success(`Applied template: ${name}`);
@@ -89,7 +91,7 @@ export const TemplateSelector: React.FC = () => {
                   {templates.map((t) => (
                     <div
                       key={t.id}
-                      onClick={() => handleSelectTemplate(t.id, t.name, t.fields)}
+                      onClick={() => handleSelectTemplate(t.id, t.name, t.fields, t.prompt_template)}
                       className="flex items-center justify-between px-4 py-2 hover:bg-parchment-dark/10 rounded cursor-pointer transition-colors group"
                     >
                       <span className="font-serif text-archive-ink text-sm truncate">{t.name}</span>

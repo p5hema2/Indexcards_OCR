@@ -7,7 +7,7 @@ import { useCreateTemplateMutation } from '../../api/templatesApi';
 import { SaveTemplateDialog } from './SaveTemplateDialog';
 
 export const FieldManager: React.FC = () => {
-  const { fields, setFields } = useWizardStore();
+  const { fields, setFields, promptTemplate } = useWizardStore();
   const [newFieldLabel, setNewFieldLabel] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
@@ -50,7 +50,7 @@ export const FieldManager: React.FC = () => {
   };
 
   const handleSaveTemplate = (name: string) => {
-    createTemplateMutation.mutate({ name, fields: fields.map((f) => f.label) });
+    createTemplateMutation.mutate({ name, fields: fields.map((f) => f.label), prompt_template: promptTemplate });
     setShowSaveDialog(false);
   };
 

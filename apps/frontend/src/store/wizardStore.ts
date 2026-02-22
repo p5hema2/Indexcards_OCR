@@ -71,6 +71,7 @@ interface WizardState {
   fields: MetadataField[];
   sessionId: string | null;
   batchId: string | null;
+  promptTemplate: string | null;
   processingState: ProcessingState;
   results: ResultRow[];
   setStep: (step: WizardStep) => void;
@@ -80,6 +81,7 @@ interface WizardState {
   updateFiles: (files: UploadedFile[]) => void;
   setBatchId: (id: string | null) => void;
   setFields: (fields: MetadataField[]) => void;
+  setPromptTemplate: (t: string | null) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
   appendLiveFeedItem: (item: ExtractionResult) => void;
@@ -101,6 +103,7 @@ const initialState = {
   fields: [],
   sessionId: null,
   batchId: null,
+  promptTemplate: null as string | null,
   processingState: initialProcessingState,
   results: [] as ResultRow[],
 };
@@ -116,6 +119,7 @@ export const useWizardStore = create<WizardState>()(
       updateFiles: (files) => set({ files }),
       setBatchId: (batchId) => set({ batchId }),
       setFields: (fields) => set({ fields }),
+      setPromptTemplate: (promptTemplate) => set({ promptTemplate }),
       removeFile: (id) =>
         set((state) => ({
           files: state.files.filter((file) => file.id !== id),
@@ -199,6 +203,7 @@ export const useWizardStore = create<WizardState>()(
         fields: state.fields,
         sessionId: state.sessionId,
         batchId: state.batchId,
+        promptTemplate: state.promptTemplate,
       }),
     }
   )

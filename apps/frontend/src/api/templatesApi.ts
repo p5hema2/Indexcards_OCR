@@ -6,6 +6,7 @@ export interface Template {
   id: string;
   name: string;
   fields: string[];
+  prompt_template?: string | null;
 }
 
 const fetchTemplates = async (): Promise<Template[]> => {
@@ -23,7 +24,7 @@ export const useTemplatesQuery = () => {
 export const useCreateTemplateMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; fields: string[] }) => {
+    mutationFn: async (data: { name: string; fields: string[]; prompt_template?: string | null }) => {
       const response = await axios.post<Template>('/api/v1/templates/', data);
       return response.data;
     },
@@ -42,7 +43,7 @@ export const useCreateTemplateMutation = () => {
 export const useUpdateTemplateMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { id: string; name?: string; fields?: string[] }) => {
+    mutationFn: async (data: { id: string; name?: string; fields?: string[]; prompt_template?: string | null }) => {
       const { id, ...body } = data;
       const response = await axios.put<Template>(`/api/v1/templates/${id}`, body);
       return response.data;
