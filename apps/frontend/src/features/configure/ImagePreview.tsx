@@ -9,8 +9,8 @@ interface MagnifierState {
   containerY: number; // cursor px relative to container top
 }
 
-const MAGNIFIER_SIZE = 150;
-const ZOOM_FACTOR = 2.5;
+const MAGNIFIER_SIZE = 200;
+const ZOOM_FACTOR = 3.5;
 
 export const ImagePreview: React.FC = () => {
   const { files } = useWizardStore();
@@ -61,7 +61,7 @@ export const ImagePreview: React.FC = () => {
               ref={imgRef}
               src={preview}
               alt={firstFile.name}
-              className="w-full max-h-[300px] object-contain rounded"
+              className="w-full max-h-[500px] object-contain rounded"
             />
 
             {/* Magnifier lens */}
