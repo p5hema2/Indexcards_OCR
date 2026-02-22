@@ -123,7 +123,7 @@ export const ResultsStep: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex-1 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-serif text-archive-sepia">Archival Results</h2>

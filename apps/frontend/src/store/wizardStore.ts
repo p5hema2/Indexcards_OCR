@@ -195,7 +195,7 @@ export const useWizardStore = create<WizardState>()(
       partialize: (state) => ({
         step: state.step,
         view: state.view,
-        files: state.files,
+        files: state.files.map(({ preview, ...rest }) => rest),
         fields: state.fields,
         sessionId: state.sessionId,
         batchId: state.batchId,

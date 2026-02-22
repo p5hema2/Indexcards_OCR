@@ -30,6 +30,7 @@ export const ImagePreview: React.FC = () => {
 
   const firstFile = files[0];
   const preview = firstFile?.preview;
+  const [previewBroken, setPreviewBroken] = useState(false);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !imgRef.current) return;
@@ -93,13 +94,14 @@ export const ImagePreview: React.FC = () => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {preview ? (
+        {preview && !previewBroken ? (
           <>
             <img
               ref={imgRef}
               src={preview}
               alt={firstFile.name}
               className="w-full max-h-[500px] object-contain rounded"
+              onError={() => setPreviewBroken(true)}
             />
 
             {/* Magnifier lens */}

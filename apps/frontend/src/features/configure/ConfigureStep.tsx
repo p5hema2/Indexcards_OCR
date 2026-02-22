@@ -62,7 +62,7 @@ export const ConfigureStep: React.FC = () => {
   const isPending = createBatchMutation.isPending || startBatchMutation.isPending;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex-1 max-w-5xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-serif text-archive-sepia">Configure Archival Batch</h2>
         <p className="text-archive-ink/60 italic font-light">

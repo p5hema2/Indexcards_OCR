@@ -17,7 +17,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Subtle paper texture overlay */}
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-multiply bg-[url('/assets/paper-noise.png')]"></div>
 
-          <div className="max-w-6xl mx-auto p-8 pb-16 relative">
+          <div className="min-h-full max-w-6xl mx-auto p-8 pb-16 relative flex flex-col">
             {children}
           </div>
         </main>
