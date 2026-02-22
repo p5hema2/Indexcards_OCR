@@ -4,7 +4,7 @@
 Phase 03.1: Dynamic Prompt Generation from Field Definitions with Configurable Prompt Template
 
 ## Current Plan
-Plan 02 complete (PromptTemplateEditor UI + full frontend data flow wiring). Phase 03.1 fully complete. Ready for UAT.
+Plan 03 complete (UAT gap closure: domain-agnostic default prompt + template_service prompt_template persistence). Phase 03.1 fully complete. All UAT gaps closed.
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -87,13 +87,15 @@ Plan 02 complete (PromptTemplateEditor UI + full frontend data flow wiring). Pha
 - **prompt_template read via config.get() in run_ocr_task:** backward compatibility with existing config.json files that lack the key — no migration required.
 - **process_batch prompt_template at end of signature:** avoids breaking existing callers that use positional args for earlier parameters.
 - **DEFAULT_TEMPLATE in PromptTemplateEditor matches ocr_engine.py exactly:** null sentinel correctly identifies when user has reset to default; no duplicate string stored.
+- **Domain-agnostic default prompt:** "aus dem Bereich Musik" removed from all three prompt locations (PromptTemplateEditor DEFAULT_TEMPLATE, ocr_engine._generate_prompt fallback, config.py EXTRACTION_PROMPT); prompts work for any historical archive card type.
+- **prompt_template persisted in template_service:** create_template() passes prompt_template to Template constructor; update_template() uses is-not-None guard matching existing name/fields pattern.
 - **PromptTemplateEditor collapsed by default:** non-intrusive for users who don't need prompt customization; power-user feature discoverable via expand toggle.
 - **null-means-default pattern throughout:** null in Zustand store = backend uses its own hardcoded German prompt; non-null = custom override sent via API.
 
 ## Last Session
-Stopped at: Completed Phase 03.1 Plan 02 — PromptTemplateEditor UI + full frontend prompt_template data flow
+Stopped at: Completed Phase 03.1 Plan 03 — UAT gap closure: domain-agnostic default prompt + template_service prompt_template persistence
 Resume file: .planning/STATE.md
-Timestamp: 2026-02-22T15:39:00Z
+Timestamp: 2026-02-22T16:57:44Z
 
 ## Accumulated Context
 
@@ -116,6 +118,7 @@ Timestamp: 2026-02-22T15:39:00Z
 - Phase 03.1 inserted after Phase 3: Dynamic prompt generation from field definitions with configurable prompt template (URGENT)
 - Phase 03.1 Plan 01 complete: prompt_template added to all 5 data model types (schema, TS, Python, Pydantic) and wired end-to-end through OCR pipeline with {{fields}} substitution and backward-compat fallback.
 - Phase 03.1 Plan 02 complete: PromptTemplateEditor React component with live preview, Zustand promptTemplate state, prompt_template wired through all frontend API calls (template save/load + batch creation).
+- Phase 03.1 Plan 03 complete: UAT gap closure — removed "aus dem Bereich Musik" from all default prompts (PromptTemplateEditor, ocr_engine, config.py); fixed template_service to persist prompt_template in create/update.
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -136,6 +139,7 @@ Timestamp: 2026-02-22T15:39:00Z
 | 02    | 05   | ~5min    | 2     | 4     |
 | 03.1  | 01   | ~4min    | 2     | 9     |
 | 03.1  | 02   | ~5min    | 2     | 7     |
+| 03.1  | 03   | ~2min    | 2     | 4     |
 
 ## Blockers
 - None.
