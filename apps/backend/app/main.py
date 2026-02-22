@@ -1,13 +1,30 @@
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.api.api_v1.api import api_router
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: clean orphaned temp sessions
+    from app.services.batch_manager import batch_manager
+    cleaned = batch_manager.cleanup_stale_sessions()
+    if cleaned > 0:
+        logger.info(f"Cleaned up {cleaned} stale temp session(s)")
+    yield
+    # Shutdown: nothing needed
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
