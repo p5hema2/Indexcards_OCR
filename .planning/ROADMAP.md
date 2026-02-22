@@ -2,10 +2,13 @@
 
 ## Phase 1: Backend Foundation (FastAPI Integration)
 **Goal:** Implementation of the modular FastAPI service, WebSocket progress tracking, and batch/upload lifecycle logic.
-**Plans:** 3 plans
+**Plans:** 6 plans
 - [x] 01-01-PLAN.md — Core architecture and modularized OcrEngine service.
 - [x] 01-02-PLAN.md — Batch lifecycle management, Upload API, and reusable field templates.
 - [x] 01-03-PLAN.md — Real-time progress updates via WebSockets and resilient error recovery.
+- [ ] 01-04-PLAN.md — Gap closure: fix health endpoint double prefix and WebSocket proxy.
+- [ ] 01-05-PLAN.md — Gap closure: template save/delete UI and image preview with magnifier.
+- [ ] 01-06-PLAN.md — Gap closure: batch history backend endpoints and frontend dashboard.
 
 **Requirements:**
 - [x] [BACKEND-01] Initialize FastAPI project structure (app, models, services).
