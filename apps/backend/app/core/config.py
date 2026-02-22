@@ -34,7 +34,7 @@ class Settings(BaseSettings):
         "Verlag", "Material", "Textdichter", "Bearbeiter", "Bemerkungen"
     ]
 
-    EXTRACTION_PROMPT: str = """Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten aus dem Bereich Musik.
+    EXTRACTION_PROMPT: str = """Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten.
 
 Deine Aufgabe ist es, die Informationen von der Karteikarte präzise zu extrahieren. 
 Achte besonders auf die Handschrift und mögliche Streichungen.

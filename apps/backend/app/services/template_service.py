@@ -43,7 +43,8 @@ class TemplateService:
         new_template = Template(
             id=str(uuid.uuid4()),
             name=template_in.name,
-            fields=template_in.fields
+            fields=template_in.fields,
+            prompt_template=template_in.prompt_template
         )
         templates.append(new_template.dict())
         self._save_templates(templates)
@@ -57,6 +58,8 @@ class TemplateService:
                     templates[i]["name"] = template_in.name
                 if template_in.fields is not None:
                     templates[i]["fields"] = template_in.fields
+                if template_in.prompt_template is not None:
+                    templates[i]["prompt_template"] = template_in.prompt_template
                 self._save_templates(templates)
                 return Template(**templates[i])
         return None
