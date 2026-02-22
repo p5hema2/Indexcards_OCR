@@ -1,6 +1,6 @@
-import React from 'react';
-import { LayoutGrid, Loader2 } from 'lucide-react';
-import { useTemplatesQuery } from '../../api/templatesApi';
+import React, { useState } from 'react';
+import { LayoutGrid, Loader2, Trash2, ChevronDown } from 'lucide-react';
+import { useTemplatesQuery, useDeleteTemplateMutation } from '../../api/templatesApi';
 import { useWizardStore } from '../../store/wizardStore';
 import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
@@ -8,26 +8,38 @@ import { toast } from 'sonner';
 export const TemplateSelector: React.FC = () => {
   const { setFields } = useWizardStore();
   const { data: templates, isLoading } = useTemplatesQuery();
+  const deleteTemplateMutation = useDeleteTemplateMutation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState('Custom / Blank Slate');
 
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const templateId = e.target.value;
-    
-    if (templateId === 'blank') {
-      setFields([]);
-      toast.info('Cleared all extraction fields.');
-      return;
-    }
+  const handleSelectBlank = () => {
+    setFields([]);
+    setSelectedLabel('Custom / Blank Slate');
+    setIsOpen(false);
+    toast.info('Cleared all extraction fields.');
+  };
 
-    const template = templates?.find((t) => t.id === templateId);
-    if (template) {
-      const newFields: MetadataField[] = template.fields.map((field) => ({
-        id: Math.random().toString(36).substring(2, 11),
-        label: field,
-        type: 'text',
-      }));
-      setFields(newFields);
-      toast.success(`Applied template: ${template.name}`);
-    }
+  const handleSelectTemplate = (id: string, name: string, fields: string[]) => {
+    const newFields: MetadataField[] = fields.map((field) => ({
+      id: Math.random().toString(36).substring(2, 11),
+      label: field,
+      type: 'text',
+    }));
+    setFields(newFields);
+    setSelectedLabel(name);
+    setIsOpen(false);
+    toast.success(`Applied template: ${name}`);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    deleteTemplateMutation.mutate(id, {
+      onSuccess: () => {
+        if (selectedLabel === name) {
+          setSelectedLabel('Custom / Blank Slate');
+        }
+      },
+    });
   };
 
   if (isLoading) {
@@ -45,18 +57,64 @@ export const TemplateSelector: React.FC = () => {
         <LayoutGrid className="w-3 h-3" />
         Collection Type
       </label>
-      <select
-        onChange={handleTemplateChange}
-        className="bg-parchment-light/30 border border-parchment-dark/50 rounded px-4 py-2 font-serif text-archive-ink focus:outline-none focus:border-archive-sepia/50 transition-colors"
-        defaultValue="blank"
-      >
-        <option value="blank">Custom / Blank Slate</option>
-        {templates?.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-      </select>
+
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="w-full flex items-center justify-between bg-parchment-light/30 border border-parchment-dark/50 rounded px-4 py-2 font-serif text-archive-ink focus:outline-none focus:border-archive-sepia/50 transition-colors hover:bg-parchment-dark/5 text-left"
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronDown className={`w-4 h-4 text-archive-ink/40 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {isOpen && (
+          <>
+            {/* Backdrop to close on outside click */}
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setIsOpen(false)}
+            />
+            <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-parchment-light border border-parchment-dark/50 rounded shadow-lg overflow-hidden">
+              {/* Blank Slate option */}
+              <div
+                onClick={handleSelectBlank}
+                className="flex items-center justify-between px-4 py-2 hover:bg-parchment-dark/10 rounded cursor-pointer transition-colors"
+              >
+                <span className="font-serif text-archive-ink text-sm">Custom / Blank Slate</span>
+              </div>
+
+              {/* User-saved templates */}
+              {templates && templates.length > 0 && (
+                <div className="border-t border-parchment-dark/20">
+                  {templates.map((t) => (
+                    <div
+                      key={t.id}
+                      onClick={() => handleSelectTemplate(t.id, t.name, t.fields)}
+                      className="flex items-center justify-between px-4 py-2 hover:bg-parchment-dark/10 rounded cursor-pointer transition-colors group"
+                    >
+                      <span className="font-serif text-archive-ink text-sm truncate">{t.name}</span>
+                      <button
+                        onClick={(e) => handleDelete(e, t.id, t.name)}
+                        className="p-1 text-archive-ink/30 hover:text-red-600 rounded transition-colors flex-shrink-0 ml-2"
+                        title={`Delete template: ${t.name}`}
+                        disabled={deleteTemplateMutation.isPending}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {templates && templates.length === 0 && (
+                <div className="px-4 py-3 text-xs text-archive-ink/40 italic font-serif border-t border-parchment-dark/20">
+                  No saved templates yet. Use "Save as Template" to create one.
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

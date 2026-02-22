@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Tag, Info } from 'lucide-react';
+import { Plus, Trash2, Tag, Info, Save } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
+import { useCreateTemplateMutation } from '../../api/templatesApi';
+import { SaveTemplateDialog } from './SaveTemplateDialog';
 
 export const FieldManager: React.FC = () => {
   const { fields, setFields } = useWizardStore();
   const [newFieldLabel, setNewFieldLabel] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  const createTemplateMutation = useCreateTemplateMutation();
 
   const addField = () => {
     if (!newFieldLabel.trim()) return;
-    
+
     const newField: MetadataField = {
       id: Math.random().toString(36).substring(2, 11),
       label: newFieldLabel.trim(),
@@ -42,6 +47,11 @@ export const FieldManager: React.FC = () => {
     if (e.key === 'Enter') {
       addField();
     }
+  };
+
+  const handleSaveTemplate = (name: string) => {
+    createTemplateMutation.mutate({ name, fields: fields.map((f) => f.label) });
+    setShowSaveDialog(false);
   };
 
   return (
@@ -107,6 +117,27 @@ export const FieldManager: React.FC = () => {
           <span>The AI will look for these specific labels in the handwritten notes of your collection.</span>
         </div>
       )}
+
+      <button
+        onClick={() => setShowSaveDialog(true)}
+        disabled={fields.length === 0}
+        className={`
+          flex items-center gap-2 px-4 py-2 rounded font-serif text-sm transition-all
+          ${fields.length > 0
+            ? 'border border-archive-sepia/30 text-archive-sepia hover:bg-archive-sepia/10 active:scale-95'
+            : 'border border-parchment-dark/20 text-archive-ink/20 cursor-not-allowed'
+          }
+        `}
+      >
+        <Save className="w-4 h-4" />
+        Save as Template
+      </button>
+
+      <SaveTemplateDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleSaveTemplate}
+      />
     </div>
   );
 };
