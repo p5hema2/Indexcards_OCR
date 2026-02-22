@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 
-const DEFAULT_TEMPLATE = `Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten aus dem Bereich Musik.
+const DEFAULT_TEMPLATE = `Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten.
 
 Deine Aufgabe ist es, die Informationen von der Karteikarte präzise zu extrahieren.
 Achte besonders auf die Handschrift und mögliche Streichungen.

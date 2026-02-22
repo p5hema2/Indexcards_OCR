@@ -90,7 +90,7 @@ class OcrEngine:
             else:
                 return template + "\n\n" + fields_block
 
-        return f"""Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten aus dem Bereich Musik.
+        return f"""Du bist ein Experte für die Digitalisierung historischer Archivkarteikarten.
 
 Deine Aufgabe ist es, die Informationen von der Karteikarte präzise zu extrahieren.
 Achte besonders auf die Handschrift und mögliche Streichungen.
