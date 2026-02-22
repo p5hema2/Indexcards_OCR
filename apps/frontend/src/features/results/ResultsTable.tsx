@@ -11,7 +11,7 @@ import {
 import { RotateCcw } from 'lucide-react';
 import type { ResultRow } from '../../store/wizardStore';
 import { useWizardStore } from '../../store/wizardStore';
-import { ThumbnailCell } from './ThumbnailCell';
+
 
 // Status color lookup map — avoid Tailwind JIT string concatenation pitfall
 const statusStyles: Record<string, string> = {
@@ -108,20 +108,11 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
   const columnHelper = createColumnHelper<ResultRow>();
 
   const columns: ColumnDef<ResultRow, unknown>[] = [
-    // Thumbnail column
-    columnHelper.display({
-      id: 'thumbnail',
-      header: '',
-      cell: ({ row }) => (
-        <ThumbnailCell batchName={batchName} filename={row.original.filename} />
-      ),
-    }),
-
     // Filename column
     columnHelper.accessor('filename', {
       header: 'File',
       cell: (info) => (
-        <span className="font-mono text-xs text-archive-ink/70 break-all">
+        <span className="font-mono text-xs text-archive-ink/70 whitespace-nowrap">
           {info.getValue()}
         </span>
       ),

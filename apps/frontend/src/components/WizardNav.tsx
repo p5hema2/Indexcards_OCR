@@ -20,7 +20,7 @@ interface WizardNavProps {
 export const WizardNav: React.FC<WizardNavProps> = ({ back, next }) => {
   return (
     <div className="sticky bottom-0 z-10 mt-auto">
-      <div className="bg-parchment-light/30 border border-parchment-dark/50 rounded-lg parchment-shadow flex justify-between items-center px-6 py-3">
+      <div className="bg-parchment border border-parchment-dark/50 rounded-lg parchment-shadow flex justify-between items-center px-6 py-3">
         {/* Back button (left side) */}
         {back ? (
           <button
