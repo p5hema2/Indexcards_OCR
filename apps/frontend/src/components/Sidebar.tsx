@@ -37,7 +37,7 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-64 border-r border-parchment-dark h-[calc(100vh-4rem)] p-4 flex flex-col gap-2">
+    <aside className="w-64 border-r border-parchment-dark h-full overflow-y-auto shrink-0 p-4 flex flex-col gap-2">
       <div className="text-xs uppercase font-bold text-archive-sepia/50 mb-4 px-2 tracking-widest">Workflow</div>
 
       {STEPS.map((step) => {
