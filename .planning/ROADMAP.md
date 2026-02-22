@@ -62,11 +62,12 @@ Plans:
 
 **Goal:** Add an optional `prompt_template` field to templates and batches, wire it through the backend OCR pipeline with `{{fields}}` placeholder substitution, and surface a collapsible prompt editor with live preview in the Configure step UI.
 **Depends on:** Phase 3
-**Plans:** 2/2 plans complete
+**Plans:** 3 plans (2 complete + 1 gap closure)
 
 Plans:
-- [ ] 03.1-01-PLAN.md — Schema + codegen + Pydantic models + backend pipeline wiring (batch_manager, ocr_engine, batches endpoint).
-- [ ] 03.1-02-PLAN.md — Frontend: Zustand store, API layers, PromptTemplateEditor component, ConfigureStep/TemplateSelector/FieldManager integration.
+- [x] 03.1-01-PLAN.md — Schema + codegen + Pydantic models + backend pipeline wiring (batch_manager, ocr_engine, batches endpoint).
+- [x] 03.1-02-PLAN.md — Frontend: Zustand store, API layers, PromptTemplateEditor component, ConfigureStep/TemplateSelector/FieldManager integration.
+- [ ] 03.1-03-PLAN.md — Gap closure: domain-agnostic default prompt + template save persists prompt_template.
 
 ## Phase 4: Refinement & Polish
 - [ ] Enhance error handling in the GUI (e.g., failed images list).
