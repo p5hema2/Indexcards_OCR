@@ -3,6 +3,7 @@ import { ArrowRight, Info } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import { Dropzone } from './Dropzone';
 import { FileList } from './FileList';
+import { WizardNav } from '../../components/WizardNav';
 
 export const UploadStep: React.FC = () => {
   const { files, setStep } = useWizardStore();
@@ -35,28 +36,19 @@ export const UploadStep: React.FC = () => {
               <span>Items are stored temporarily until processing</span>
             </div>
           </div>
-          
+
           <FileList />
         </div>
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-parchment-dark/30">
-        <button
-          onClick={handleNext}
-          disabled={files.length === 0}
-          className={`
-            flex items-center gap-2 px-8 py-3 rounded font-serif text-lg transition-all
-            ${
-              files.length > 0
-                ? 'bg-archive-sepia text-parchment-light shadow-lg hover:bg-archive-sepia/90 active:scale-95'
-                : 'bg-parchment-dark/30 text-archive-ink/20 cursor-not-allowed'
-            }
-          `}
-        >
-          Proceed to Configuration
-          <ArrowRight className="w-5 h-5" />
-        </button>
-      </div>
+      <WizardNav
+        next={{
+          label: 'Proceed to Configuration',
+          onClick: handleNext,
+          disabled: files.length === 0,
+          icon: <ArrowRight className="w-5 h-5" />,
+        }}
+      />
     </div>
   );
 };

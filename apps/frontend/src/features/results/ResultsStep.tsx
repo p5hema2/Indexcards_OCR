@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { SummaryBanner } from './SummaryBanner';
 import { ResultsTable } from './ResultsTable';
 import { useResultsExport } from './useResultsExport';
+import { WizardNav } from '../../components/WizardNav';
 
 export const ResultsStep: React.FC = () => {
   const {
@@ -152,16 +153,13 @@ export const ResultsStep: React.FC = () => {
         isProcessing={isProcessing}
       />
 
-      {/* Start New Batch */}
-      <div className="flex justify-center pt-4">
-        <button
-          onClick={handleStartNewBatch}
-          className="flex items-center gap-2 px-6 py-3 rounded font-serif text-lg border border-parchment-dark/60 text-archive-ink/60 hover:border-archive-sepia/50 hover:text-archive-sepia hover:bg-parchment-dark/10 transition-all"
-        >
-          <RefreshCcw className="w-5 h-5" />
-          Start New Batch
-        </button>
-      </div>
+      <WizardNav
+        next={{
+          label: 'Start New Batch',
+          onClick: handleStartNewBatch,
+          icon: <RefreshCcw className="w-5 h-5" />,
+        }}
+      />
     </div>
   );
 };

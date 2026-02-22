@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Play, Archive, Info, Loader2 } from 'lucide-react';
+import { Play, Archive, Info } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import { TemplateSelector } from './TemplateSelector';
 import { FieldManager } from './FieldManager';
 import { ImagePreview } from './ImagePreview';
 import { useCreateBatchMutation, useStartBatchMutation } from '../../api/batchesApi';
 import { toast } from 'sonner';
+import { WizardNav } from '../../components/WizardNav';
 
 export const ConfigureStep: React.FC = () => {
   const { files, fields, sessionId, setStep, setBatchId } = useWizardStore();
@@ -115,41 +116,20 @@ export const ConfigureStep: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex justify-between pt-4 border-t border-parchment-dark/30">
-        <button
-          onClick={handleBack}
-          disabled={isPending}
-          className="flex items-center gap-2 px-6 py-3 rounded font-serif text-lg text-archive-ink/60 hover:text-archive-sepia hover:bg-parchment-dark/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Return to Staging
-        </button>
-
-        <button
-          onClick={handleStartExtraction}
-          disabled={fields.length === 0 || isPending || !batchName.trim()}
-          className={`
-            flex items-center gap-2 px-8 py-3 rounded font-serif text-lg transition-all relative
-            ${
-              fields.length > 0 && batchName.trim() && !isPending
-                ? 'bg-archive-sepia text-parchment-light shadow-lg hover:bg-archive-sepia/90 active:scale-95'
-                : 'bg-parchment-dark/30 text-archive-ink/20 cursor-not-allowed'
-            }
-          `}
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Initializing Batch...
-            </>
-          ) : (
-            <>
-              Commence Processing
-              <Play className="w-5 h-5 fill-current" />
-            </>
-          )}
-        </button>
-      </div>
+      <WizardNav
+        back={{
+          label: 'Return to Staging',
+          onClick: handleBack,
+          disabled: isPending,
+        }}
+        next={{
+          label: 'Commence Processing',
+          onClick: handleStartExtraction,
+          disabled: fields.length === 0 || isPending || !batchName.trim(),
+          loading: isPending,
+          icon: <Play className="w-5 h-5 fill-current" />,
+        }}
+      />
     </div>
   );
 };
