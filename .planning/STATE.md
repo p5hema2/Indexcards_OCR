@@ -4,7 +4,7 @@
 Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 
 ## Current Plan
-01-05: COMPLETE — Template Save/Delete UI: useCreateTemplateMutation, useDeleteTemplateMutation, SaveTemplateDialog, TemplateSelector custom dropdown with delete buttons, ImagePreview with hover magnifier
+01-06: COMPLETE — Batch History Dashboard: GET /history + DELETE /{name} endpoints, BatchHistoryDashboard, BatchHistoryCard, AppView routing in wizardStore, sidebar/header navigation
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -24,9 +24,10 @@ Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 - [x] Phase 03 Plan 03: Results step (React): sortable/editable table, thumbnails, lightbox, CSV/JSON export.
 - [x] Phase 01 Plan 04 (gap closure): Fixed health endpoint double-prefix bug and Vite WS proxy for UAT tests 1 and 5.
 - [x] Phase 01 Plan 05 (gap closure): Template Save/Delete UI + ImagePreview with magnifier for UAT test 4.
+- [x] Phase 01 Plan 06 (gap closure): Batch History Dashboard — GET /history, DELETE /{name}, BatchHistoryDashboard + BatchHistoryCard, AppView routing.
 
 ## Active Tasks
-- [x] Execute Phase 01 Plan 05: Template Save/Delete UI and image preview with magnifier.
+- [x] Execute Phase 01 Plan 06: Batch History Dashboard.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -62,6 +63,10 @@ Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 - **Merge editedData on results hydration:** fresh API data overwrites data fields but editedData map is preserved within session.
 - **Tailwind JIT status color lookup map:** static statusStyles object instead of template literals to avoid JIT purge.
 - **retryImage navigates to processing step:** single-image retry starts new WS stream; retryBatch used for bulk retry (POST /retry).
+- **FastAPI route ordering: /history before /{batch_name}:** path parameters match greedily; static segments must be registered first.
+- **AppView in Zustand (wizard|history):** top-level view switch enables history dashboard without a React Router dependency; view persisted in localStorage.
+- **loadBatchForReview sets batchId+step+view atomically:** ResultsStep uses existing useResultsQuery(batchId) to hydrate — no new API wiring needed.
+- **delete_batch checks disk AND history file:** batch found in either location counts as found; both cleaned up if present.
 - **FastAPI router prefix pattern:** include_router(router, prefix='/x') + @router.get('/') resolves to /x (not /x/x); decorator must be '/' not the route name.
 - **Vite 7 WS proxy:** rewriteWsOrigin:true required in addition to changeOrigin:true for WebSocket upgrade origin rewriting (http-proxy-3 behaviour).
 - **Custom div dropdown for TemplateSelector:** HTML <select> cannot render custom markup inside <option>, so refactored to div-based dropdown with per-row Trash2 delete button.
@@ -69,8 +74,8 @@ Phase 01: Backend Foundation (gap closure plans) — COMPLETE
 - **ImagePreview reads blob URL from Zustand:** Temp session files are not served by StaticFiles; blob URLs created during upload step via URL.createObjectURL. Falls back to placeholder text if undefined.
 
 ## Last Session
-Stopped at: Phase 01 Plan 05 complete (Template Save/Delete UI + ImagePreview with hover magnifier for UAT test 4)
-Resume file: .planning/phases/01-backend-foundation/01-05-SUMMARY.md
+Stopped at: Phase 01 Plan 06 complete (Batch History Dashboard: GET /history + DELETE endpoints, BatchHistoryDashboard + BatchHistoryCard, AppView routing)
+Resume file: .planning/phases/01-backend-foundation/01-06-SUMMARY.md
 
 ## Accumulated Context
 
@@ -84,6 +89,7 @@ Resume file: .planning/phases/01-backend-foundation/01-05-SUMMARY.md
 - Phase 03 Plan 03 complete: ResultsStep with TanStack Table, editable cells, YARL thumbnails, CSV/JSON export — full wizard end-to-end
 - Phase 01 Plan 04 (gap closure) complete: fixed health endpoint double-prefix (/health/health -> /health) and added rewriteWsOrigin:true to Vite proxy for WS upgrade forwarding
 - Phase 01 Plan 05 (gap closure) complete: template save/delete UI (SaveTemplateDialog, custom TemplateSelector dropdown, FieldManager Save button) + ImagePreview with 2.5x magnifier in Configure step sidebar
+- Phase 01 Plan 06 (gap closure) complete: GET /history + DELETE /{name} backend endpoints, BatchHistoryDashboard React component, AppView Zustand state, sidebar/header navigation
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -96,6 +102,7 @@ Resume file: .planning/phases/01-backend-foundation/01-05-SUMMARY.md
 | 03    | 03   | ~3min    | 2     | 7     |
 | 01    | 04   | ~5min    | 1     | 2     |
 | 01    | 05   | ~2min    | 2     | 6     |
+| 01    | 06   | ~5min    | 2     | 9     |
 
 ## Blockers
 - None.
