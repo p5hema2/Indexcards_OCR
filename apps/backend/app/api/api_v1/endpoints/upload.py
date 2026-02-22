@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import List, Optional
 import shutil
 
@@ -35,3 +35,12 @@ async def upload_files(
         filenames=filenames,
         message=f"Successfully uploaded {len(filenames)} files."
     )
+
+
+@router.delete("/{session_id}", status_code=204)
+async def delete_session(session_id: str):
+    """Delete a temp upload session and its files."""
+    deleted = batch_manager.delete_session(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+    return None

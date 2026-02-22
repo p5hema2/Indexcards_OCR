@@ -1,5 +1,6 @@
 import json
 import shutil
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -169,6 +170,34 @@ class BatchManager:
             json.dump(history, f, indent=2)
 
         return True
+
+    def cleanup_stale_sessions(self, max_age_hours: int = 24) -> int:
+        """Remove temp session directories older than max_age_hours.
+        Returns the count of cleaned-up sessions."""
+        if not self.temp_dir.exists():
+            return 0
+        now = time.time()
+        max_age_seconds = max_age_hours * 3600
+        cleaned = 0
+        for entry in self.temp_dir.iterdir():
+            if entry.is_dir():
+                try:
+                    age = now - entry.stat().st_mtime
+                    if age > max_age_seconds:
+                        shutil.rmtree(str(entry))
+                        cleaned += 1
+                except OSError:
+                    pass
+        return cleaned
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a temp upload session directory.
+        Returns True if found and deleted, False if not found."""
+        session_path = self.temp_dir / session_id
+        if session_path.exists():
+            shutil.rmtree(str(session_path))
+            return True
+        return False
 
     def list_batches(self) -> List[str]:
         if not self.batches_dir.exists():
