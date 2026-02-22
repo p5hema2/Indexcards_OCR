@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Phase
-Phase 01: Backend Foundation (UAT gap closure round 2)
+Phase 01: Backend Foundation (UAT gap closure round 2) -- ALL PLANS COMPLETE
 
 ## Current Plan
 01-07: COMPLETE — BLOCKER gap closure: asyncio event loop fix + silent failure broadcast
@@ -29,9 +29,10 @@ Phase 01: Backend Foundation (UAT gap closure round 2)
 - [x] Phase 01 Plan 06 (gap closure): Batch History Dashboard — GET /history, DELETE /{name}, BatchHistoryDashboard + BatchHistoryCard, AppView routing.
 - [x] Phase 01 Plan 09 (gap closure): Image preview 200px magnifier at 3.5x zoom, 500px max-height for A5 cards.
 - [x] Phase 01 Plan 08 (gap closure): Temp session cleanup — startup stale removal + DELETE /upload/{session_id}.
+- [x] Phase 01 Plan 07 (gap closure): BLOCKER fix — asyncio event loop capture + silent failure broadcast in batches.py.
 
 ## Active Tasks
-- [ ] Execute Phase 01 Plan 07: UAT gap closure round 2 (blocker).
+- All Phase 01 gap closure plans complete. Ready for UAT re-test.
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -76,12 +77,14 @@ Phase 01: Backend Foundation (UAT gap closure round 2)
 - **Custom div dropdown for TemplateSelector:** HTML <select> cannot render custom markup inside <option>, so refactored to div-based dropdown with per-row Trash2 delete button.
 - **Magnifier uses pure CSS/JS (no library):** Overlaid scaled <img> positioned from cursor's relative x/y in container; 200px lens, 3.5x zoom factor.
 - **ImagePreview reads blob URL from Zustand:** Temp session files are not served by StaticFiles; blob URLs created during upload step via URL.createObjectURL. Falls back to placeholder text if undefined.
+- **Event loop closure capture for thread-safe WS callbacks:** asyncio.get_running_loop() in async method, closure variable used by worker thread's run_coroutine_threadsafe.
+- **Defensive broadcast on all exit paths:** run_ocr_task creates fallback BatchProgress(current=0, total=0) when last_state is None.
 - **Modern FastAPI lifespan over deprecated on_event:** asynccontextmanager lifespan is the recommended pattern; on_event("startup") is deprecated.
 - **24-hour default for stale session cleanup:** configurable via max_age_hours parameter; runs on every server startup.
 
 ## Last Session
-Stopped at: Completed 01-08-PLAN.md (temp session cleanup — startup stale removal + DELETE endpoint)
-Resume file: .planning/phases/01-backend-foundation/01-08-SUMMARY.md
+Stopped at: Completed 01-07-PLAN.md (BLOCKER gap closure: asyncio event loop + silent failure broadcast)
+Resume file: .planning/phases/01-backend-foundation/01-07-SUMMARY.md
 
 ## Accumulated Context
 
@@ -98,6 +101,7 @@ Resume file: .planning/phases/01-backend-foundation/01-08-SUMMARY.md
 - Phase 01 Plan 06 (gap closure) complete: GET /history + DELETE /{name} backend endpoints, BatchHistoryDashboard React component, AppView Zustand state, sidebar/header navigation
 - Phase 01 Plan 09 (gap closure) complete: image preview 200px magnifier at 3.5x zoom, 500px max-height for A5 index card readability
 - Phase 01 Plan 08 (gap closure) complete: startup stale session cleanup (24h threshold) + DELETE /upload/{session_id} endpoint for explicit frontend teardown
+- Phase 01 Plan 07 (gap closure) complete: BLOCKER fix — asyncio event loop capture in async context + fallback BatchProgress broadcast on all exit paths
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -113,6 +117,7 @@ Resume file: .planning/phases/01-backend-foundation/01-08-SUMMARY.md
 | 01    | 06   | ~5min    | 2     | 9     |
 | 01    | 09   | <1min    | 1     | 1     |
 | 01    | 08   | ~2min    | 2     | 3     |
+| 01    | 07   | ~2min    | 2     | 2     |
 
 ## Blockers
 - None.
