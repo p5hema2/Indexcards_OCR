@@ -249,7 +249,8 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 
         total = len(image_files)
         start_time = time.time()
-        
+        loop = asyncio.get_running_loop()
+
         # Helper to update checkpoint
         def _save_checkpoint(current_results):
             try:
@@ -260,7 +261,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 
         # Use to_thread for the whole pool execution to avoid blocking the event loop
         def _run_batch():
-            loop = asyncio.get_event_loop()
+            # 'loop' is captured from the async closure above (asyncio.get_running_loop())
             # Use a dict to track results by filename to handle replacements (retries)
             res_map = {r["filename"]: r for r in results}
 
