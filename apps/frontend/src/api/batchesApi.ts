@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { ExtractionResult } from '../store/wizardStore';
 
@@ -13,6 +13,17 @@ export interface BatchResponse {
   batch_name: string;
   status: string;
   files_count: number;
+}
+
+export interface BatchHistoryItem {
+  batch_name: string;
+  custom_name: string;
+  created_at: string;
+  status: string;
+  files_count: number;
+  fields: string[];
+  has_errors: boolean;
+  error_count: number;
 }
 
 const createBatch = async (data: BatchCreate): Promise<BatchResponse> => {
@@ -113,5 +124,36 @@ export const useResultsQuery = (batchName: string | null) => {
     queryKey: ['results', batchName],
     queryFn: () => fetchResults(batchName!),
     enabled: !!batchName,
+  });
+};
+
+const fetchBatchHistory = async (): Promise<BatchHistoryItem[]> => {
+  const response = await axios.get<BatchHistoryItem[]>('/api/v1/batches/history');
+  return response.data;
+};
+
+const deleteBatch = async (batchName: string): Promise<void> => {
+  await axios.delete(`/api/v1/batches/${batchName}`);
+};
+
+export const useBatchHistoryQuery = () => {
+  return useQuery({
+    queryKey: ['batch-history'],
+    queryFn: fetchBatchHistory,
+  });
+};
+
+export const useDeleteBatchMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteBatch,
+    onSuccess: () => {
+      toast.success('Batch deleted');
+      queryClient.invalidateQueries({ queryKey: ['batch-history'] });
+    },
+    onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
+      const errorMessage = error.response?.data?.detail || 'Failed to delete batch.';
+      toast.error(errorMessage);
+    },
   });
 };

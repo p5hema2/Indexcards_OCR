@@ -4,11 +4,17 @@ import { UploadStep } from './features/upload/UploadStep';
 import { ConfigureStep } from './features/configure/ConfigureStep';
 import { ProcessingStep } from './features/processing/ProcessingStep';
 import { ResultsStep } from './features/results/ResultsStep';
+import { BatchHistoryDashboard } from './features/history/BatchHistoryDashboard';
 
 function App() {
   const step = useWizardStore((state) => state.step);
+  const view = useWizardStore((state) => state.view);
 
-  const renderStep = () => {
+  const renderContent = () => {
+    if (view === 'history') {
+      return <BatchHistoryDashboard />;
+    }
+
     switch (step) {
       case 'upload':
         return <UploadStep />;
@@ -23,14 +29,13 @@ function App() {
     }
   };
 
-
   return (
     <MainLayout>
       <div className="space-y-6">
-        {renderStep()}
+        {renderContent()}
       </div>
     </MainLayout>
-  )
+  );
 }
 
-export default App
+export default App;

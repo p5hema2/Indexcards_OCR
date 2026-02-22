@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type WizardStep = 'upload' | 'configure' | 'processing' | 'results';
+export type AppView = 'wizard' | 'history';
 
 export interface UploadedFile {
   id: string;
@@ -64,6 +65,7 @@ const initialProcessingState: ProcessingState = {
 
 interface WizardState {
   step: WizardStep;
+  view: AppView;
   files: UploadedFile[];
   fields: MetadataField[];
   sessionId: string | null;
@@ -71,6 +73,7 @@ interface WizardState {
   processingState: ProcessingState;
   results: ResultRow[];
   setStep: (step: WizardStep) => void;
+  setView: (view: AppView) => void;
   setSessionId: (id: string | null) => void;
   resetWizard: () => void;
   updateFiles: (files: UploadedFile[]) => void;
@@ -87,10 +90,12 @@ interface WizardState {
   setResults: (rows: ResultRow[]) => void;
   updateResultCell: (filename: string, field: string, value: string) => void;
   resetProcessing: () => void;
+  loadBatchForReview: (batchName: string) => void;
 }
 
 const initialState = {
   step: 'upload' as WizardStep,
+  view: 'wizard' as AppView,
   files: [],
   fields: [],
   sessionId: null,
@@ -104,6 +109,7 @@ export const useWizardStore = create<WizardState>()(
     (set) => ({
       ...initialState,
       setStep: (step) => set({ step }),
+      setView: (view) => set({ view }),
       setSessionId: (sessionId) => set({ sessionId }),
       resetWizard: () => set(initialState),
       updateFiles: (files) => set({ files }),
@@ -176,11 +182,18 @@ export const useWizardStore = create<WizardState>()(
           processingState: initialProcessingState,
           results: [],
         }),
+      loadBatchForReview: (batchName) =>
+        set({
+          batchId: batchName,
+          step: 'results',
+          view: 'wizard',
+        }),
     }),
     {
       name: 'wizard-storage',
       partialize: (state) => ({
         step: state.step,
+        view: state.view,
         files: state.files,
         fields: state.fields,
         sessionId: state.sessionId,
