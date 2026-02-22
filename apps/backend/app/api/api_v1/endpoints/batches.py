@@ -8,7 +8,7 @@ import logging
 from app.services.batch_manager import batch_manager
 from app.services.ocr_engine import ocr_engine
 from app.services.ws_manager import ws_manager
-from app.models.schemas import BatchCreate, BatchResponse
+from app.models.schemas import BatchCreate, BatchHistoryItem, BatchResponse
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,27 @@ async def list_batches():
     Lists all permanent batches.
     """
     return batch_manager.list_batches()
+
+
+@router.get("/history", response_model=List[BatchHistoryItem])
+async def get_batch_history():
+    """
+    Returns full batch history with enriched metadata (file counts, error counts).
+    Route placed before /{batch_name} routes to prevent FastAPI treating 'history' as a parameter.
+    """
+    return batch_manager.get_history()
+
+
+@router.delete("/{batch_name}", status_code=204)
+async def delete_batch(batch_name: str):
+    """
+    Deletes a batch directory and removes its history entry.
+    Returns 204 on success, 404 if batch not found.
+    """
+    deleted = batch_manager.delete_batch(batch_name)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Batch '{batch_name}' not found")
+    return None
 
 
 @router.post("/{batch_name}/start")

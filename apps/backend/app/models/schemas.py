@@ -5,6 +5,16 @@ class HealthCheck(BaseModel):
     status: str
     version: str
 
+class BatchHistoryItem(BaseModel):
+    batch_name: str
+    custom_name: str
+    created_at: str
+    status: str
+    files_count: int
+    fields: List[str]
+    has_errors: bool = False
+    error_count: int = 0
+
 class ExtractionResult(BaseModel):
     filename: str
     batch: str

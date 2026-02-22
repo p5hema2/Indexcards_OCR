@@ -1,3 +1,4 @@
+import json
 import shutil
 import uuid
 from datetime import datetime
@@ -42,7 +43,6 @@ class BatchManager:
         batch_path.mkdir(parents=True, exist_ok=False)
 
         # Store fields in config.json
-        import json
         config_data = {
             "custom_name": custom_name,
             "fields": fields or settings.FIELD_KEYS,
@@ -66,7 +66,6 @@ class BatchManager:
 
     def _record_history(self, batch_name: str, custom_name: str, fields: Optional[List[str]] = None):
         history_file = Path(settings.BATCHES_HISTORY_FILE)
-        import json
         history = []
         if history_file.exists():
             try:
@@ -86,6 +85,90 @@ class BatchManager:
         
         with open(history_file, "w") as f:
             json.dump(history, f, indent=2)
+
+    def get_history(self) -> list:
+        """Read batches.json and return enriched batch history entries."""
+        history_file = Path(settings.BATCHES_HISTORY_FILE)
+        if not history_file.exists():
+            return []
+
+        try:
+            with open(history_file, "r") as f:
+                history = json.load(f)
+        except Exception:
+            return []
+
+        image_extensions = {".jpg", ".jpeg", ".png", ".tiff", ".tif"}
+        enriched = []
+        for entry in history:
+            batch_name = entry.get("batch_name", "")
+            batch_path = self.batches_dir / batch_name
+
+            # files_count: count image files live if directory exists, else use stored value
+            if batch_path.exists():
+                files_count = len([
+                    f for f in batch_path.iterdir()
+                    if f.is_file() and f.suffix.lower() in image_extensions
+                ])
+            else:
+                files_count = entry.get("files_count", 0)
+
+            # has_errors / error_count
+            error_dir = batch_path / "_errors"
+            if error_dir.exists():
+                error_files = [f for f in error_dir.iterdir() if f.is_file()]
+                has_errors = len(error_files) > 0
+                error_count = len(error_files)
+            else:
+                has_errors = False
+                error_count = 0
+
+            enriched.append({
+                "batch_name": batch_name,
+                "custom_name": entry.get("custom_name", batch_name),
+                "created_at": entry.get("created_at", ""),
+                "status": entry.get("status", "uploaded"),
+                "files_count": files_count,
+                "fields": entry.get("fields", []),
+                "has_errors": has_errors,
+                "error_count": error_count,
+            })
+
+        return enriched
+
+    def delete_batch(self, batch_name: str) -> bool:
+        """Delete a batch directory and remove its entry from batches.json.
+        Returns True if found and deleted, False if not found."""
+        batch_path = self.batches_dir / batch_name
+        history_file = Path(settings.BATCHES_HISTORY_FILE)
+
+        # Load history
+        history = []
+        if history_file.exists():
+            try:
+                with open(history_file, "r") as f:
+                    history = json.load(f)
+            except Exception:
+                history = []
+
+        # Check if batch exists in history or on disk
+        original_length = len(history)
+        history = [e for e in history if e.get("batch_name") != batch_name]
+        found_in_history = len(history) < original_length
+        found_on_disk = batch_path.exists()
+
+        if not found_in_history and not found_on_disk:
+            return False
+
+        # Delete directory if it exists
+        if found_on_disk:
+            shutil.rmtree(str(batch_path))
+
+        # Save updated history
+        with open(history_file, "w") as f:
+            json.dump(history, f, indent=2)
+
+        return True
 
     def list_batches(self) -> List[str]:
         if not self.batches_dir.exists():
