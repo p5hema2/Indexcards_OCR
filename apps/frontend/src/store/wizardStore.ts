@@ -115,16 +115,30 @@ export const useWizardStore = create<WizardState>()(
       setStep: (step) => set({ step }),
       setView: (view) => set({ view }),
       setSessionId: (sessionId) => set({ sessionId }),
-      resetWizard: () => set(initialState),
+      resetWizard: () =>
+        set((state) => {
+          state.files.forEach((f) => {
+            if (f.preview) URL.revokeObjectURL(f.preview);
+          });
+          return initialState;
+        }),
       updateFiles: (files) => set({ files }),
       setBatchId: (batchId) => set({ batchId }),
       setFields: (fields) => set({ fields }),
       setPromptTemplate: (promptTemplate) => set({ promptTemplate }),
       removeFile: (id) =>
-        set((state) => ({
-          files: state.files.filter((file) => file.id !== id),
-        })),
-      clearFiles: () => set({ files: [] }),
+        set((state) => {
+          const target = state.files.find((f) => f.id === id);
+          if (target?.preview) URL.revokeObjectURL(target.preview);
+          return { files: state.files.filter((f) => f.id !== id) };
+        }),
+      clearFiles: () =>
+        set((state) => {
+          state.files.forEach((f) => {
+            if (f.preview) URL.revokeObjectURL(f.preview);
+          });
+          return { files: [] };
+        }),
       appendLiveFeedItem: (item) =>
         set((state) => ({
           processingState: {

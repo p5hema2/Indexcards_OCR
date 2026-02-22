@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 
@@ -20,15 +20,38 @@ export const PromptTemplateEditor: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
 
+  // Local state for instant textarea feedback; debounced write to Zustand
   const effectiveTemplate = promptTemplate ?? DEFAULT_TEMPLATE;
+  const [localTemplate, setLocalTemplate] = useState(effectiveTemplate);
+  const isLocalEdit = useRef(false);
+
+  // Sync store → local when store changes externally (e.g., template load)
+  useEffect(() => {
+    if (!isLocalEdit.current) {
+      setLocalTemplate(promptTemplate ?? DEFAULT_TEMPLATE);
+    }
+    isLocalEdit.current = false;
+  }, [promptTemplate]);
+
+  // Debounced local → store write (300ms)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const storeValue = localTemplate === DEFAULT_TEMPLATE ? null : localTemplate || null;
+      if (storeValue !== promptTemplate) {
+        isLocalEdit.current = true;
+        setPromptTemplate(storeValue);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [localTemplate, promptTemplate, setPromptTemplate]);
 
   const fieldsBlock = fields
     .map((f, i) => `${i + 1}. **${f.label}**: Extrahiere den Wert fur das Feld '${f.label}'.`)
     .join('\n');
 
-  const preview = effectiveTemplate.includes('{{fields}}')
-    ? effectiveTemplate.replace('{{fields}}', fieldsBlock)
-    : effectiveTemplate + '\n\n' + fieldsBlock;
+  const preview = localTemplate.includes('{{fields}}')
+    ? localTemplate.replace('{{fields}}', fieldsBlock)
+    : localTemplate + '\n\n' + fieldsBlock;
 
   return (
     <div className="border border-parchment-dark/50 rounded-lg overflow-hidden bg-parchment-light/20">
@@ -71,11 +94,8 @@ export const PromptTemplateEditor: React.FC = () => {
           {!isPreview && (
             <textarea
               className="w-full h-48 font-mono text-sm bg-parchment-light/30 border border-parchment-dark/50 rounded p-3 focus:outline-none focus:border-archive-sepia/50 resize-y"
-              value={effectiveTemplate}
-              onChange={(e) => {
-                const val = e.target.value;
-                setPromptTemplate(val === DEFAULT_TEMPLATE ? null : val || null);
-              }}
+              value={localTemplate}
+              onChange={(e) => setLocalTemplate(e.target.value)}
             />
           )}
 
@@ -89,7 +109,10 @@ export const PromptTemplateEditor: React.FC = () => {
           {/* Reset to default — only visible when promptTemplate is not null */}
           {promptTemplate !== null && (
             <button
-              onClick={() => setPromptTemplate(null)}
+              onClick={() => {
+                setLocalTemplate(DEFAULT_TEMPLATE);
+                setPromptTemplate(null);
+              }}
               className="text-xs text-archive-ink/50 hover:text-archive-ink underline transition-colors"
             >
               Reset to default
