@@ -29,7 +29,7 @@ export const PromptTemplateEditor: React.FC = () => {
   // Sync store → local when store changes externally (e.g., template load)
   useEffect(() => {
     if (!isLocalEdit.current) {
-      setLocalTemplate(promptTemplate ?? DEFAULT_TEMPLATE);
+      setLocalTemplate(promptTemplate ?? DEFAULT_TEMPLATE); // eslint-disable-line react-hooks/set-state-in-effect -- intentional sync from external store prop
     }
     isLocalEdit.current = false;
   }, [promptTemplate]);

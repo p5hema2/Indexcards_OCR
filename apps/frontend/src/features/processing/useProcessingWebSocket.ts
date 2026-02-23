@@ -7,43 +7,51 @@ export function useProcessingWebSocket(
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  // Keep callback ref current — read only inside WS event handler, not during render
+  useEffect(() => { onMessageRef.current = onMessage; });
 
   useEffect(() => {
     if (!batchId) return;
 
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${location.host}/api/v1/ws/task/${batchId}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const data: BatchProgress = JSON.parse(event.data);
-        onMessageRef.current(data);
-      } catch {
-        console.error('WS parse error', event.data);
-      }
-    };
+    const connect = () => {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-    ws.onclose = () => {
-      // Single reconnect after 1s -- backend re-sends last state on reconnect
-      // No need for exponential backoff (local/LAN use only)
-      setTimeout(() => {
-        if (wsRef.current === ws) {
-          // Only reconnect if we haven't been cleaned up
-          const newWs = new WebSocket(wsUrl);
-          newWs.onmessage = ws.onmessage;
-          newWs.onclose = ws.onclose;
-          wsRef.current = newWs;
+      ws.onmessage = (event) => {
+        try {
+          const data: BatchProgress = JSON.parse(event.data);
+          onMessageRef.current(data);
+        } catch {
+          console.error('WS parse error', event.data);
         }
-      }, 1000);
+      };
+
+      ws.onclose = () => {
+        // Single reconnect after 1s; backend re-sends last state on reconnect
+        setTimeout(() => {
+          if (wsRef.current === ws) {
+            connect();
+          }
+        }, 1000);
+      };
     };
+
+    connect();
 
     return () => {
       const ref = wsRef.current;
-      wsRef.current = null; // Signal cleanup to prevent reconnect
-      ref?.close();
+      wsRef.current = null; // prevent reconnect loop on cleanup
+      if (ref) {
+        if (ref.readyState === WebSocket.CONNECTING) {
+          // Avoid "WebSocket is closed before connection is established" warning
+          ref.onopen = () => ref.close();
+        } else {
+          ref.close();
+        }
+      }
     };
   }, [batchId]);
 

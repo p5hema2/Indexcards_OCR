@@ -1,17 +1,26 @@
 import shutil
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import json
 import logging
 
 from app.services.batch_manager import batch_manager
 from app.services.ocr_engine import ocr_engine
 from app.services.ws_manager import ws_manager
-from app.models.schemas import BatchCreate, BatchHistoryItem, BatchProgress, BatchResponse
+from app.models.schemas import BatchCreate, BatchHistoryItem, BatchProgress, BatchResponse, BatchStartRequest
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _resolve_provider(provider: str, model: Optional[str] = None):
+    """Returns (api_endpoint, model_name, api_key) for the given provider."""
+    if provider == "ollama":
+        return settings.OLLAMA_API_ENDPOINT, model or settings.OLLAMA_MODEL_NAME, settings.OLLAMA_API_KEY
+    return settings.API_ENDPOINT, model or settings.MODEL_NAME, settings.OPENROUTER_API_KEY
+
 
 async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool = False):
     """Background task to run OCR on a batch."""
@@ -26,11 +35,17 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
 
         fields = None
         prompt_template = None
+        provider = "openrouter"
+        model = None
         if config_path.exists():
             with open(config_path, "r") as f:
                 config = json.load(f)
                 fields = config.get("fields")
                 prompt_template = config.get("prompt_template")
+                provider = config.get("provider", "openrouter")
+                model = config.get("model")
+
+        api_endpoint, model_name, api_key = _resolve_provider(provider, model)
 
         # If retry_errors is True, move files back from _errors so ocr_engine can process them.
         if retry_errors:
@@ -47,6 +62,9 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
             resume=resume,
             cancel_event=cancel_event,
             prompt_template=prompt_template,
+            api_endpoint=api_endpoint,
+            model_name=model_name,
+            api_key=api_key,
         )
 
         # Mark as completed (or cancelled) in a final progress update
@@ -69,6 +87,10 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
             )
             await ws_manager.broadcast_progress(batch_name, final_state)
 
+        # Persist final status to batches.json
+        final_status = "cancelled" if cancel_event.is_set() else "completed"
+        batch_manager.update_batch_status(batch_name, final_status)
+
     except Exception as e:
         logger.exception(f"Error in background OCR task for {batch_name}: {e}")
         error_msg = str(e)
@@ -88,6 +110,8 @@ async def run_ocr_task(batch_name: str, resume: bool = True, retry_errors: bool 
                 error=error_msg,
             )
             await ws_manager.broadcast_progress(batch_name, failed_state)
+        # Persist failed status to batches.json
+        batch_manager.update_batch_status(batch_name, "failed")
     finally:
         # Clean up cancel event after the task ends (success, cancel, or failure)
         ws_manager.clear_cancel_event(batch_name)
@@ -152,16 +176,29 @@ async def delete_batch(batch_name: str):
 
 
 @router.post("/{batch_name}/start")
-async def start_batch(batch_name: str, background_tasks: BackgroundTasks):
+async def start_batch(batch_name: str, background_tasks: BackgroundTasks, body: BatchStartRequest = BatchStartRequest()):
     """
-    Starts OCR processing for a batch.
+    Starts OCR processing for a batch. Accepts optional provider selection in the request body.
     """
     batch_path = batch_manager.get_batch_path(batch_name)
     if not batch_path.exists():
         raise HTTPException(status_code=404, detail="Batch not found")
 
+    # Persist provider choice into config.json so run_ocr_task can pick it up
+    config_path = batch_path / "config.json"
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            config = json.load(f)
+    else:
+        config = {}
+    config["provider"] = body.provider
+    if body.model:
+        config["model"] = body.model
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=2)
+
     background_tasks.add_task(run_ocr_task, batch_name)
-    return {"message": "Batch processing started", "batch_name": batch_name}
+    return {"message": "Batch processing started", "batch_name": batch_name, "provider": body.provider, "model": body.model}
 
 
 @router.get("/{batch_name}/results")

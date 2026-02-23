@@ -75,3 +75,7 @@ class BatchProgress(BaseModel):
     last_result: Optional[ExtractionResult] = None
     status: str # "running", "completed", "failed", "retrying"
     error: Optional[str] = None  # Human-readable error message for "failed" status
+
+class BatchStartRequest(BaseModel):
+    provider: str = "openrouter"  # "openrouter" | "ollama"
+    model: Optional[str] = None   # None → provider default

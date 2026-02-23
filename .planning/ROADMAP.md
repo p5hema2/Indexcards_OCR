@@ -69,6 +69,20 @@ Plans:
 - [x] 03.1-02-PLAN.md — Frontend: Zustand store, API layers, PromptTemplateEditor component, ConfigureStep/TemplateSelector/FieldManager integration.
 - [ ] 03.1-03-PLAN.md — Gap closure: domain-agnostic default prompt + template save persists prompt_template.
 
+## Phase 6: Merge features of main and current branch
+**Goal:** Port features from the main branch (provider selection, OCR resilience, multi-entry results, XML exports, app branding) onto the current branch, resolving divergent implementations via feature interview.
+**Plans:** 8 plans
+
+Plans:
+- [x] 06-01-PLAN.md — Feature discovery interview (8/9 features accepted, Feature 5 rejected).
+- [x] 06-02-PLAN.md — Backend reimplementation (cancel/results/retry, OCR resilience, provider selection).
+- [x] 06-03-PLAN.md — Frontend feature porting (provider store, UI, WS reconnect, multi-entry, XML exports, thumbnails).
+- [x] 06-04-PLAN.md — Provider selector wiring and model defaults.
+- [x] 06-05-PLAN.md — Processing WebSocket reconnect hardening.
+- [x] 06-06-PLAN.md — App branding (ThULB logo, Hack the Heritage banner, title rename).
+- [x] 06-07-PLAN.md — Gap closure: results table layout restructure + thumbnail DOM performance.
+- [ ] 06-08-PLAN.md — Gap closure: textarea for multiline editing, remove duplicate filename column, reorder columns.
+
 ## Phase 4: Refinement & Polish
 - [ ] Enhance error handling in the GUI (e.g., failed images list).
 - [ ] Optimize image resizing logic in the backend.
@@ -80,3 +94,14 @@ Plans:
 - [ ] Research technical optimizations for VLM (e.g., better image quality vs. cost).
 - [ ] Support for additional output formats (JSON-LD, XML).
 - [ ] Packaging for local deployment (Docker or portable executable).
+
+## Phase 7: UAT Bug Fixes — Session Lifecycle, Batch Data Isolation, Navigation & Data Quality
+
+**Goal:** Fix all 15 bugs discovered during comprehensive browser-automated UAT audit of the full application workflow (Upload → Configure → Processing → Results → Archive → Export). Bugs are organized into 4 clusters: (A) Session Lifecycle — stale session after batch creation prevents re-processing/resume (BUG-13 HIGH, BUG-15 MEDIUM), (B) Batch Data Isolation — results view uses Zustand fields instead of batch config, breaking all exports (BUG-06 CRITICAL, BUG-07 CRITICAL), (C) Navigation & State Restoration — sidebar guards, template name persistence, toast timing (BUG-01 HIGH, BUG-02 HIGH, BUG-03 MEDIUM, BUG-12 MEDIUM), (D) Data Quality & Cosmetics — batch status/names, trailing newline, LIDO hardcode, page title, WebSocket race (BUG-04, BUG-05, BUG-08, BUG-09, BUG-10, BUG-11, BUG-14).
+**Depends on:** Phase 6
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Critical/high bug fixes: batch data isolation (BUG-06/07), session lifecycle (BUG-13/15), batch name uniqueness (BUG-05).
+- [ ] 07-02-PLAN.md — Navigation & state restoration: sidebar results navigation (BUG-01/02), template name persistence (BUG-03), toast timing (BUG-12).
+- [ ] 07-03-PLAN.md — Data quality & cosmetics: batch status persistence (BUG-04), trailing newline (BUG-08), LIDO hardcode (BUG-09), page title (BUG-10), WebSocket race (BUG-11).

@@ -13,7 +13,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({ isOpen, 
   // Reset name when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setName('');
+      setName(''); // eslint-disable-line react-hooks/set-state-in-effect -- intentional reset on open
     }
   }, [isOpen]);
 

@@ -64,6 +64,13 @@ const initialProcessingState: ProcessingState = {
   isProcessing: false,
 };
 
+export type OcrProvider = 'openrouter' | 'ollama';
+
+export const PROVIDER_DEFAULT_MODELS: Record<OcrProvider, string> = {
+  openrouter: 'qwen/qwen3-vl-8b-instruct',
+  ollama: 'qwen3-vl:235b',
+};
+
 interface WizardState {
   step: WizardStep;
   view: AppView;
@@ -72,6 +79,8 @@ interface WizardState {
   sessionId: string | null;
   batchId: string | null;
   promptTemplate: string | null;
+  provider: OcrProvider;
+  model: string;
   processingState: ProcessingState;
   results: ResultRow[];
   setStep: (step: WizardStep) => void;
@@ -82,6 +91,10 @@ interface WizardState {
   setBatchId: (id: string | null) => void;
   setFields: (fields: MetadataField[]) => void;
   setPromptTemplate: (t: string | null) => void;
+  selectedTemplateName: string | null;
+  setSelectedTemplateName: (name: string | null) => void;
+  setProvider: (provider: OcrProvider) => void;
+  setModel: (model: string) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
   appendLiveFeedItem: (item: ExtractionResult) => void;
@@ -104,6 +117,9 @@ const initialState = {
   sessionId: null,
   batchId: null,
   promptTemplate: null as string | null,
+  selectedTemplateName: null as string | null,
+  provider: 'openrouter' as OcrProvider,
+  model: PROVIDER_DEFAULT_MODELS['openrouter'],
   processingState: initialProcessingState,
   results: [] as ResultRow[],
 };
@@ -126,6 +142,9 @@ export const useWizardStore = create<WizardState>()(
       setBatchId: (batchId) => set({ batchId }),
       setFields: (fields) => set({ fields }),
       setPromptTemplate: (promptTemplate) => set({ promptTemplate }),
+      setSelectedTemplateName: (selectedTemplateName) => set({ selectedTemplateName }),
+      setProvider: (provider) => set({ provider }),
+      setModel: (model) => set({ model }),
       removeFile: (id) =>
         set((state) => {
           const target = state.files.find((f) => f.id === id);
@@ -213,11 +232,14 @@ export const useWizardStore = create<WizardState>()(
       partialize: (state) => ({
         step: state.step,
         view: state.view,
-        files: state.files.map(({ preview, ...rest }) => rest),
+        files: state.files.map(({ preview: _, ...rest }) => rest),
         fields: state.fields,
         sessionId: state.sessionId,
         batchId: state.batchId,
         promptTemplate: state.promptTemplate,
+        selectedTemplateName: state.selectedTemplateName,
+        provider: state.provider,
+        model: state.model,
       }),
     }
   )

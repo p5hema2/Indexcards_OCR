@@ -16,11 +16,16 @@ class Settings(BaseSettings):
     BATCHES_HISTORY_FILE: str = os.path.join(DATA_DIR, "batches.json")
     OUTPUT_BASE: str = "output_batches"
     
-    # API Configuration
+    # API Configuration — OpenRouter (default)
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     API_BASE_URL: str = "https://openrouter.ai/api/v1"
     API_ENDPOINT: str = f"{API_BASE_URL}/chat/completions"
     MODEL_NAME: str = "qwen/qwen3-vl-8b-instruct"
+
+    # API Configuration — Ollama / Open WebUI (FSU Jena)
+    OLLAMA_API_ENDPOINT: str = "https://openwebui-workshop.test.uni-jena.de/api/v1/chat/completions"
+    OLLAMA_MODEL_NAME: str = "qwen3-vl:235b"
+    OLLAMA_API_KEY: str = os.getenv("OLLAMA_API_KEY", "")
 
     # Performance Defaults
     MAX_WORKERS: int = 5

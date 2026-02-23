@@ -72,7 +72,10 @@ export const BatchHistoryCard: React.FC<BatchHistoryCardProps> = ({ batch }) => 
     <div className="bg-parchment-light/30 border border-parchment-dark/50 rounded-lg p-5 flex flex-col gap-3 hover:border-archive-sepia/30 hover:shadow-sm transition-all duration-200">
       {/* Top row: name + status */}
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-serif text-lg text-archive-ink leading-tight">{batch.custom_name}</h3>
+        <div className="flex flex-col gap-0.5">
+          <h3 className="font-serif text-lg text-archive-ink leading-tight">{batch.custom_name}</h3>
+          <span className="font-mono text-[10px] text-archive-ink/40 leading-tight truncate" title={batch.batch_name}>{batch.batch_name}</span>
+        </div>
         <span
           className={`flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border ${statusClass}`}
         >

@@ -1,11 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useWizardStore } from '../../store/wizardStore';
 import type { ResultRow } from '../../store/wizardStore';
-import { useResultsQuery } from '../../api/batchesApi';
-import { useRetryBatchMutation } from '../../api/batchesApi';
-import { retryImage } from '../../api/batchesApi';
-import { toast } from 'sonner';
+import { useResultsQuery, useRetryImageMutation, useRetryBatchMutation } from '../../api/batchesApi';
 import { SummaryBanner } from './SummaryBanner';
 import { ResultsTable } from './ResultsTable';
 import { useResultsExport } from './useResultsExport';
@@ -14,7 +12,6 @@ import { WizardNav } from '../../components/WizardNav';
 export const ResultsStep: React.FC = () => {
   const {
     batchId,
-    fields,
     results,
     processingState,
     setResults,
@@ -50,15 +47,29 @@ export const ResultsStep: React.FC = () => {
     setResults(rows);
   }, [rawResults, results, setResults]);
 
-  const fieldLabels = fields.map((f) => f.label);
+  const fieldLabels = useMemo(() => {
+    if (results.length === 0) return [];
+    const seen = new Map<string, number>();
+    results.forEach((r) => {
+      Object.keys(r.data).forEach((k) => {
+        if (!seen.has(k)) seen.set(k, seen.size);
+      });
+    });
+    return Array.from(seen.entries())
+      .sort((a, b) => a[1] - b[1])
+      .map(([k]) => k)
+      .filter((k) => !k.startsWith('_'));
+  }, [results]);
 
-  // Computed summary stats
   const failedCount = results.filter((r) => r.status === 'failed').length;
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
 
-  const { downloadCSV, downloadJSON } = useResultsExport(results, fieldLabels, batchId ?? 'batch');
+  const { downloadCSV, downloadJSON, downloadLIDO, downloadEAD, downloadDarwinCore, downloadDublinCore, downloadMARCXML, downloadMETSMODS } =
+    useResultsExport(results, fieldLabels, batchId ?? 'batch');
 
   const retryBatchMutation = useRetryBatchMutation();
+  const retryImageMutation = useRetryImageMutation();
+  const [retryingFilename, setRetryingFilename] = useState<string | null>(null);
 
   const handleRetryAllFailed = () => {
     if (!batchId) return;
@@ -68,22 +79,31 @@ export const ResultsStep: React.FC = () => {
         setStep('processing');
       },
       onError: () => {
+        toast.error('Failed to start retry.');
         setIsProcessing(false);
       },
     });
   };
 
-  const handleRetryImage = async (filename: string) => {
+  const handleRetryImage = (filename: string) => {
     if (!batchId) return;
+    setRetryingFilename(filename);
     setIsProcessing(true);
-    try {
-      await retryImage(batchId, filename);
-      toast.success(`Retry started for ${filename}`);
-      setStep('processing');
-    } catch {
-      toast.error(`Failed to retry ${filename}`);
-      setIsProcessing(false);
-    }
+    retryImageMutation.mutate(
+      { batchName: batchId, filename },
+      {
+        onSuccess: () => {
+          toast.success(`Retry started for ${filename}`);
+          setRetryingFilename(null);
+          setStep('processing');
+        },
+        onError: () => {
+          toast.error(`Failed to retry ${filename}`);
+          setRetryingFilename(null);
+          setIsProcessing(false);
+        },
+      }
+    );
   };
 
   const handleStartNewBatch = () => {
@@ -138,18 +158,28 @@ export const ResultsStep: React.FC = () => {
         totalDuration={totalDuration}
         onDownloadCSV={downloadCSV}
         onDownloadJSON={downloadJSON}
+        onDownloadLIDO={downloadLIDO}
+        onDownloadEAD={downloadEAD}
+        onDownloadDarwinCore={downloadDarwinCore}
+        onDownloadDublinCore={downloadDublinCore}
+        onDownloadMARCXML={downloadMARCXML}
+        onDownloadMETSMODS={downloadMETSMODS}
         onRetryAllFailed={handleRetryAllFailed}
         failedCount={failedCount}
         isProcessing={isProcessing}
       />
 
       {/* Results table */}
-      <ResultsTable
-        results={results}
-        fields={fieldLabels}
-        onRetryImage={handleRetryImage}
-        isProcessing={isProcessing}
-      />
+      <div className="parchment-shadow border border-parchment-dark rounded-lg overflow-hidden">
+        <ResultsTable
+          results={results}
+          fields={fieldLabels}
+          batchName={batchId ?? ''}
+          onRetryImage={handleRetryImage}
+          isProcessing={isProcessing}
+          retryingFilename={retryingFilename}
+        />
+      </div>
 
       <WizardNav
         next={{

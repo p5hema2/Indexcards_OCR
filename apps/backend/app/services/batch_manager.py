@@ -88,6 +88,23 @@ class BatchManager:
         with open(history_file, "w") as f:
             json.dump(history, f, indent=2)
 
+    def update_batch_status(self, batch_name: str, status: str) -> None:
+        """Update the status field of a batch in batches.json."""
+        history_file = Path(settings.BATCHES_HISTORY_FILE)
+        if not history_file.exists():
+            return
+        try:
+            with open(history_file, "r") as f:
+                history = json.load(f)
+            for entry in history:
+                if entry.get("batch_name") == batch_name:
+                    entry["status"] = status
+                    break
+            with open(history_file, "w") as f:
+                json.dump(history, f, indent=2)
+        except Exception:
+            pass  # non-critical — status display is cosmetic
+
     def get_history(self) -> list:
         """Read batches.json and return enriched batch history entries."""
         history_file = Path(settings.BATCHES_HISTORY_FILE)

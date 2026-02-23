@@ -1,17 +1,10 @@
 import React from 'react';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useBatchHistoryQuery } from '../../api/batchesApi';
-import { useWizardStore } from '../../store/wizardStore';
 import { BatchHistoryCard } from './BatchHistoryCard';
 
 export const BatchHistoryDashboard: React.FC = () => {
   const { data: batches, isLoading, error } = useBatchHistoryQuery();
-  const { setView, resetWizard } = useWizardStore();
-
-  const handleNewBatch = () => {
-    resetWizard();
-    setView('wizard');
-  };
 
   // Sort batches newest-first
   const sortedBatches = batches
@@ -23,20 +16,11 @@ export const BatchHistoryDashboard: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-serif text-archive-sepia">Batch Archive</h2>
-          <p className="text-archive-ink/50 text-sm italic font-light">
-            Browse, review, retry, or delete past extraction batches.
-          </p>
-        </div>
-        <button
-          onClick={handleNewBatch}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-archive-sepia text-parchment rounded hover:bg-archive-sepia/90 transition-all shadow-sm flex-shrink-0"
-        >
-          <Plus size={16} />
-          New Batch
-        </button>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-3xl font-serif text-archive-sepia">Batch Archive</h2>
+        <p className="text-archive-ink/50 text-sm italic font-light">
+          Browse, review, retry, or delete past extraction batches.
+        </p>
       </div>
 
       {/* Loading state */}
@@ -60,13 +44,7 @@ export const BatchHistoryDashboard: React.FC = () => {
       {!isLoading && !error && sortedBatches.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-4 py-24 text-archive-ink/40">
           <p className="font-serif italic text-sm">No batches in the archive yet.</p>
-          <button
-            onClick={handleNewBatch}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium border border-parchment-dark/50 rounded text-archive-ink/60 hover:text-archive-sepia hover:border-archive-sepia/50 transition-all"
-          >
-            <Plus size={16} />
-            Start your first batch
-          </button>
+          <p className="text-xs text-archive-ink/30">Use <strong>New Batch</strong> in the sidebar to get started.</p>
         </div>
       )}
 

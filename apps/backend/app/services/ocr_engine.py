@@ -39,21 +39,49 @@ class OcrEngine:
             return base64.b64encode(f.read()).decode("utf-8")
 
     def _extract_json_from_model_content(self, content: str) -> str:
-        """Entfernt Markdown-Fences und versucht, sauberes JSON zu extrahieren."""
+        """Entfernt Markdown-Fences und extrahiert sauberes JSON (Objekt oder Array).
+
+        Behandelt:
+        - Code-Fences (```json ... ```)
+        - Trailing Text nach dem JSON (z. B. "Hinweis: ...")
+        - Vorangestellten Text vor dem JSON
+        """
         content = content.strip()
+
+        # 1. Markdown-Code-Fences entfernen
         if content.startswith("```"):
             parts = content.split("```")
             for p in reversed(parts):
-                if p.strip():
-                    content = p.strip()
-                    if content.startswith("json"):
-                        content = content[4:].strip()
+                p = p.strip()
+                if p:
+                    if p.startswith("json"):
+                        p = p[4:].strip()
+                    content = p
                     break
-        if not content.startswith("{"):
-            start = content.find("{")
+        content = content.strip()
+
+        # 2. JSON-Grenzen ermitteln und auf den reinen JSON-Block trimmen
+        if content.startswith("["):
+            end = content.rfind("]")
+            if end != -1:
+                content = content[:end + 1]
+        elif content.startswith("{"):
             end = content.rfind("}")
-            if start != -1 and end != -1:
-                content = content[start:end+1]
+            if end != -1:
+                content = content[:end + 1]
+        else:
+            # Weder [ noch { am Anfang → erstes Vorkommen suchen
+            start_brace = content.find("{")
+            start_bracket = content.find("[")
+            if start_bracket != -1 and (start_brace == -1 or start_bracket < start_brace):
+                end = content.rfind("]")
+                if end != -1:
+                    content = content[start_bracket:end + 1]
+            elif start_brace != -1:
+                end = content.rfind("}")
+                if end != -1:
+                    content = content[start_brace:end + 1]
+
         return content
 
     def _validate_extraction(self, parsed: dict) -> Tuple[bool, List[str]]:
@@ -104,18 +132,31 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 **AUSGABEFORMAT:** Antworte NUR mit einem validen JSON-Objekt.
 """
 
-    def _call_vlm_api_resilient(self, image_path: Path, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Tuple[Optional[Dict], Optional[str]]:
+    def _call_vlm_api_resilient(
+        self,
+        image_path: Path,
+        fields: Optional[List[str]] = None,
+        max_size: Optional[int] = 1600,
+        prompt_template: Optional[str] = None,
+        api_endpoint: Optional[str] = None,
+        model_name: Optional[str] = None,
+        api_key: Optional[str] = None,
+    ) -> Tuple[Optional[Dict], Optional[str]]:
         """Resilienter API-Aufruf: Session, exponential backoff with jitter."""
-        if not self.api_key:
+        resolved_endpoint = api_endpoint or settings.API_ENDPOINT
+        resolved_model = model_name or settings.MODEL_NAME
+        resolved_key = api_key if api_key is not None else self.api_key
+
+        if not resolved_key:
             return None, "API Key missing"
 
         base64_image = self._encode_image_to_base64(image_path, max_size=max_size)
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        headers = {"Authorization": f"Bearer {resolved_key}"}
 
         prompt = self._generate_prompt(fields, template=prompt_template) if fields else settings.EXTRACTION_PROMPT
-        
+
         payload = {
-            "model": settings.MODEL_NAME,
+            "model": resolved_model,
             "messages": [
                 {
                     "role": "user",
@@ -126,33 +167,55 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 }
             ],
             "temperature": 0.1,
-            "max_tokens": 1200
+            "max_tokens": 4096
         }
 
         max_retries = settings.MAX_RETRIES
         attempt = 0
-        last_error_msg = "Max retries reached"
         while attempt < max_retries:
             try:
-                resp = self.session.post(settings.API_ENDPOINT, headers=headers, json=payload, timeout=120)
-                if resp.status_code == 429:
-                    ra = resp.headers.get("Retry-After")
-                    wait = float(ra) if ra and ra.isdigit() else (2 ** attempt) + random.random()
-                    logger.warning(f"Rate limit (429). Sleeping {wait:.1f}s (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(wait)
-                    attempt += 1
-                    continue
-                # Non-retriable HTTP errors: fail fast with the actual API message
-                if resp.status_code in (401, 403):
+                resp = self.session.post(resolved_endpoint, headers=headers, json=payload, timeout=120)
+
+                # --- Explicit HTTP error handling with body capture ---
+                if resp.status_code >= 400:
+                    error_msg = f"HTTP {resp.status_code}"
                     try:
-                        body = resp.json()
-                        api_msg = body.get("error", {}).get("message", resp.text[:200])
+                        err_json = resp.json()
+                        detail = (
+                            err_json.get("error", {}).get("message")
+                            or err_json.get("detail")
+                            or ""
+                        )
+                        if detail:
+                            error_msg += f": {str(detail)[:250]}"
+                        else:
+                            body = resp.text[:250].strip()
+                            if body:
+                                error_msg += f": {body}"
                     except Exception:
-                        api_msg = resp.text[:200]
-                    error = f"API error {resp.status_code}: {api_msg}"
-                    logger.error(f"[{image_path.name}] {error}")
-                    return None, error
-                resp.raise_for_status()
+                        body = resp.text[:250].strip()
+                        if body:
+                            error_msg += f": {body}"
+
+                    if resp.status_code == 401:
+                        return None, "Ungültiger API Key (401)"
+                    if resp.status_code == 429:
+                        ra = resp.headers.get("Retry-After")
+                        wait = float(ra) if ra and ra.isdigit() else (2 ** attempt) + random.random()
+                        logger.warning(f"Rate limit (429). Sleeping {wait:.1f}s (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait)
+                        attempt += 1
+                        continue
+                    if resp.status_code >= 500:
+                        # Server error — retry with backoff
+                        wait = (2 ** attempt) + random.uniform(0, 1)
+                        logger.warning(f"{error_msg}. Retrying in {wait:.1f}s (attempt {attempt+1}/{max_retries})")
+                        time.sleep(wait)
+                        attempt += 1
+                        continue
+                    # 4xx client error (except 401/429) — no point retrying
+                    return None, error_msg
+
                 result = resp.json()
                 if "choices" in result and len(result["choices"]) > 0:
                     content = result["choices"][0]["message"]["content"]
@@ -160,13 +223,23 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                     try:
                         parsed = json.loads(cleaned)
                     except json.JSONDecodeError:
-                        logger.warning(f"JSON decode failed for {image_path.name}")
-                        return None, "JSONDecodeError"
+                        raw_preview = cleaned[:120].replace("\n", " ")
+                        logger.warning(f"JSON decode failed for {image_path.name}: {raw_preview}")
+                        return None, f"JSON-Parsing fehlgeschlagen. Antwort: {raw_preview}"
                     return parsed, None
                 else:
-                    return None, "No choices returned by API"
+                    return None, "Keine Antwort vom Modell (leere choices)"
+            except requests.exceptions.ConnectionError as e:
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                logger.warning(f"Verbindungsfehler: {e}. Retrying in {wait:.1f}s (attempt {attempt+1}/{max_retries})")
+                time.sleep(wait)
+                attempt += 1
+            except requests.exceptions.Timeout:
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                logger.warning(f"Timeout. Retrying in {wait:.1f}s (attempt {attempt+1}/{max_retries})")
+                time.sleep(wait)
+                attempt += 1
             except requests.exceptions.RequestException as e:
-                last_error_msg = str(e)
                 wait = (2 ** attempt) + random.uniform(0, 1)
                 logger.warning(f"RequestException: {e}. Retrying in {wait:.1f}s (attempt {attempt+1}/{max_retries})")
                 time.sleep(wait)
@@ -174,16 +247,30 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
             except Exception as e:
                 logger.exception(f"Unexpected error in _call_vlm_api_resilient: {e}")
                 return None, str(e)
-        return None, f"Max retries reached: {last_error_msg}"
+        return None, f"Max. Versuche ({max_retries}) erreicht – API antwortet nicht"
 
-    def _process_card_sync(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Dict[str, Any]:
+    def _process_card_sync(
+        self,
+        image_path: Path,
+        batch_name: str,
+        fields: Optional[List[str]] = None,
+        max_size: Optional[int] = 1600,
+        prompt_template: Optional[str] = None,
+        api_endpoint: Optional[str] = None,
+        model_name: Optional[str] = None,
+        api_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Synchronous card processing logic."""
         start_time = time.time()
         filename = image_path.name
         try:
-            data, error = self._call_vlm_api_resilient(image_path, fields=fields, max_size=max_size, prompt_template=prompt_template)
+            data, error = self._call_vlm_api_resilient(
+                image_path, fields=fields, max_size=max_size,
+                prompt_template=prompt_template,
+                api_endpoint=api_endpoint, model_name=model_name, api_key=api_key,
+            )
             duration = time.time() - start_time
-            
+
             if error:
                 logger.error(f"[{batch_name}] {filename} -> {error}")
                 return {
@@ -193,8 +280,26 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                     "error": error,
                     "duration": duration
                 }
-            
-            # Enrich metadata
+
+            # Handle multi-entry pages (AI returned a JSON array, e.g. Findmittel)
+            if isinstance(data, list):
+                entry_count = len(data)
+                data = {
+                    "_entries": json.dumps(data, ensure_ascii=False),
+                    "_entry_count": str(entry_count),
+                    "Datei": filename,
+                    "Batch": batch_name,
+                }
+                return {
+                    "filename": filename,
+                    "batch": batch_name,
+                    "success": True,
+                    "data": data,
+                    "duration": time.time() - start_time,
+                    "validation_errors": [],
+                }
+
+            # Enrich metadata (single-entry / dict response)
             if data is None:
                 data = {}
             data["Datei"] = filename
@@ -224,9 +329,9 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                 "duration": time.time() - start_time
             }
 
-    async def process_card(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600, prompt_template: Optional[str] = None) -> Dict[str, Any]:
+    async def process_card(self, image_path: Path, batch_name: str, fields: Optional[List[str]] = None, max_size: Optional[int] = 1600) -> Dict[str, Any]:
         """Async wrapper for process_card_sync."""
-        return await asyncio.to_thread(self._process_card_sync, image_path, batch_name, fields, max_size, prompt_template)
+        return await asyncio.to_thread(self._process_card_sync, image_path, batch_name, fields, max_size)
 
     async def process_batch(
         self,
@@ -237,11 +342,14 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
         resume: bool = True,
         cancel_event: Optional[threading.Event] = None,
         prompt_template: Optional[str] = None,
+        api_endpoint: Optional[str] = None,
+        model_name: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Processes an entire batch of images asynchronously using a thread pool."""
         batch_name = batch_dir.name
         image_files = sorted(list(batch_dir.glob("*.jpg")) + list(batch_dir.glob("*.jpeg")))
-        
+
         if not image_files:
             logger.warning(f"No images found in {batch_dir}")
             return []
@@ -273,7 +381,6 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
 
         total = len(image_files)
         start_time = time.time()
-        loop = asyncio.get_running_loop()
 
         # Helper to update checkpoint
         def _save_checkpoint(current_results):
@@ -283,15 +390,20 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
             except Exception as e:
                 logger.error(f"Failed to save checkpoint for {batch_name}: {e}")
 
+        # Capture the running event loop here (in the async context) before entering the thread
+        loop = asyncio.get_running_loop()
+
         # Use to_thread for the whole pool execution to avoid blocking the event loop
         def _run_batch():
-            # 'loop' is captured from the async closure above (asyncio.get_running_loop())
             # Use a dict to track results by filename to handle replacements (retries)
             res_map = {r["filename"]: r for r in results}
 
             with ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
                 futures = {
-                    executor.submit(self._process_card_sync, img, batch_name, fields, max_size, prompt_template): img
+                    executor.submit(
+                        self._process_card_sync, img, batch_name, fields, max_size,
+                        prompt_template, api_endpoint, model_name, api_key
+                    ): img
                     for img in files_to_process
                 }
                 for i, fut in enumerate(as_completed(futures), len(completed_files) + 1):
@@ -322,9 +434,9 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                         avg_time = elapsed / processed_count if processed_count > 0 else 0
                         remaining_count = total - i
                         eta = avg_time * remaining_count
-                        
+
                         from app.models.schemas import BatchProgress, ExtractionResult
-                        
+
                         # Prepare progress data
                         progress_data = BatchProgress(
                             batch_name=batch_name,
@@ -335,7 +447,7 @@ Falls ein Feld nicht auf der Karte vorhanden ist oder nicht entziffert werden ka
                             last_result=ExtractionResult(**res),
                             status="running"
                         )
-                        
+
                         # Call the callback via the main loop's thread-safe method if it's async
                         if asyncio.iscoroutinefunction(progress_callback):
                             asyncio.run_coroutine_threadsafe(

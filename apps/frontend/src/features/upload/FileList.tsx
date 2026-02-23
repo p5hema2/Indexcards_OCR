@@ -16,6 +16,7 @@ export const FileList: React.FC = () => {
 
   const handleDelete = (id: string, name: string) => {
     toast(`Remove ${name}?`, {
+      duration: Infinity,
       action: {
         label: 'Confirm',
         onClick: () => {

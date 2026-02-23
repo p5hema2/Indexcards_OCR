@@ -6,16 +6,17 @@ import type { MetadataField } from '../../store/wizardStore';
 import { toast } from 'sonner';
 
 export const TemplateSelector: React.FC = () => {
-  const { setFields, setPromptTemplate } = useWizardStore();
+  const { setFields, setPromptTemplate, selectedTemplateName, setSelectedTemplateName } = useWizardStore();
   const { data: templates, isLoading } = useTemplatesQuery();
   const deleteTemplateMutation = useDeleteTemplateMutation();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState('Custom / Blank Slate');
+  const [selectedLabel, setSelectedLabel] = useState(selectedTemplateName ?? 'Custom / Blank Slate');
 
   const handleSelectBlank = () => {
     setFields([]);
     setPromptTemplate(null);
     setSelectedLabel('Custom / Blank Slate');
+    setSelectedTemplateName(null);
     setIsOpen(false);
     toast.info('Cleared all extraction fields.');
   };
@@ -29,6 +30,7 @@ export const TemplateSelector: React.FC = () => {
     setFields(newFields);
     setPromptTemplate(promptTemplate ?? null);
     setSelectedLabel(name);
+    setSelectedTemplateName(name);
     setIsOpen(false);
     toast.success(`Applied template: ${name}`);
   };
@@ -39,6 +41,7 @@ export const TemplateSelector: React.FC = () => {
       onSuccess: () => {
         if (selectedLabel === name) {
           setSelectedLabel('Custom / Blank Slate');
+          setSelectedTemplateName(null);
         }
       },
     });

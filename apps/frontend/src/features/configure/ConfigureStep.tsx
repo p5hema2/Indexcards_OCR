@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, Archive, Info } from 'lucide-react';
 import { useWizardStore } from '../../store/wizardStore';
 import { TemplateSelector } from './TemplateSelector';
+import { ProviderSelector } from './ProviderSelector';
 import { FieldManager } from './FieldManager';
 import { PromptTemplateEditor } from './PromptTemplateEditor';
 import { ImagePreview } from './ImagePreview';
@@ -10,8 +11,8 @@ import { toast } from 'sonner';
 import { WizardNav } from '../../components/WizardNav';
 
 export const ConfigureStep: React.FC = () => {
-  const { files, fields, sessionId, setStep, setBatchId, promptTemplate } = useWizardStore();
-  const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 10)}`);
+  const { files, fields, sessionId, batchId, provider, model, setStep, setBatchId, promptTemplate } = useWizardStore();
+  const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 16).replace('T', '_')}`);
 
   const createBatchMutation = useCreateBatchMutation();
   const startBatchMutation = useStartBatchMutation();
@@ -50,8 +51,8 @@ export const ConfigureStep: React.FC = () => {
       {
         onSuccess: (data) => {
           setBatchId(data.batch_name);
-          // Now start the batch
-          startBatchMutation.mutate(data.batch_name, {
+          // Start batch with the selected provider and model
+          startBatchMutation.mutate({ batchName: data.batch_name, provider, model }, {
             onSuccess: () => {
               setStep('processing');
             },
@@ -64,7 +65,7 @@ export const ConfigureStep: React.FC = () => {
   const isPending = createBatchMutation.isPending || startBatchMutation.isPending;
 
   return (
-    <div className="flex-1 max-w-5xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex-1 max-w-6xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-serif text-archive-sepia">Configure Archival Batch</h2>
         <p className="text-archive-ink/60 italic font-light">
@@ -72,54 +73,66 @@ export const ConfigureStep: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-4 space-y-8">
-          <div className="space-y-6 bg-parchment-light/30 border border-parchment-dark/50 p-6 rounded-lg parchment-shadow">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs uppercase tracking-widest text-archive-ink/40 font-semibold flex items-center gap-2">
-                <Archive className="w-3 h-3" />
-                Batch Identity
-              </label>
-              <input
-                type="text"
-                value={batchName}
-                onChange={(e) => setBatchName(e.target.value)}
-                placeholder="Unique Batch Name"
-                className="w-full bg-parchment-light/30 border border-parchment-dark/50 rounded px-4 py-2 font-serif text-archive-ink focus:outline-none focus:border-archive-sepia/50 transition-colors"
-              />
-            </div>
+      {/* Image preview - standalone above the grid */}
+      {files.length > 0 && (
+        <div className="bg-parchment-light/30 border border-parchment-dark/50 p-4 rounded-lg parchment-shadow">
+          <ImagePreview />
+        </div>
+      )}
 
-            <TemplateSelector />
-
-            <div className="pt-4 border-t border-parchment-dark/30 space-y-2">
-              <h4 className="text-xs uppercase tracking-widest text-archive-ink/40 font-semibold">Batch Summary</h4>
-              <div className="flex flex-col gap-1 text-sm text-archive-ink/70 font-serif italic">
-                <span>• {files.length} Collection Items</span>
-                <span>• {fields.length} Metadata Fields</span>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Card 1 — What to extract */}
+        <div className="space-y-6 bg-parchment-light/30 border border-parchment-dark/50 p-6 rounded-lg parchment-shadow">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs uppercase tracking-widest text-archive-ink/40 font-semibold flex items-center gap-2">
+              <Archive className="w-3 h-3" />
+              Batch Identity
+            </label>
+            <input
+              type="text"
+              value={batchName}
+              onChange={(e) => setBatchName(e.target.value)}
+              placeholder="Unique Batch Name"
+              className="w-full bg-parchment-light/30 border border-parchment-dark/50 rounded px-4 py-2 font-serif text-archive-ink focus:outline-none focus:border-archive-sepia/50 transition-colors"
+            />
           </div>
 
-          {/* Image preview - only shown when files are present */}
-          {files.length > 0 && (
-            <div className="bg-parchment-light/30 border border-parchment-dark/50 p-4 rounded-lg parchment-shadow">
-              <ImagePreview />
-            </div>
-          )}
+          <TemplateSelector />
 
-          <div className="flex items-center gap-2 p-4 bg-archive-ink/5 border border-archive-ink/20 rounded-lg text-archive-ink/60 text-xs italic">
-            <Info className="w-4 h-4 flex-shrink-0" />
-            <span>Changes to the batch name or templates will not affect your staged files.</span>
+          <div className="pt-4 border-t border-parchment-dark/30">
+            <FieldManager />
+          </div>
+
+          <div className="pt-4 border-t border-parchment-dark/30 space-y-2">
+            <h4 className="text-xs uppercase tracking-widest text-archive-ink/40 font-semibold">Batch Summary</h4>
+            <div className="flex flex-col gap-1 text-sm text-archive-ink/70 font-serif italic">
+              <span>• {files.length} Collection Items</span>
+              <span>• {fields.length} Metadata Fields</span>
+            </div>
           </div>
         </div>
 
-        <div className="lg:col-span-8 space-y-6">
-          <FieldManager />
-          <div className="mt-6">
+        {/* Card 2 — How to extract */}
+        <div className="space-y-6 bg-parchment-light/30 border border-parchment-dark/50 p-6 rounded-lg parchment-shadow">
+          <ProviderSelector />
+
+          <div className="pt-4 border-t border-parchment-dark/30">
             <PromptTemplateEditor />
           </div>
         </div>
       </div>
+
+      <div className="flex items-center gap-2 p-4 bg-archive-ink/5 border border-archive-ink/20 rounded-lg text-archive-ink/60 text-xs italic">
+        <Info className="w-4 h-4 flex-shrink-0" />
+        <span>Changes to the batch name or templates will not affect your staged files.</span>
+      </div>
+
+      {batchId && (
+        <div className="flex items-center gap-2 p-4 bg-archive-sepia/5 border border-archive-sepia/20 rounded-lg text-archive-ink/60 text-sm italic font-serif">
+          <Info className="w-4 h-4 flex-shrink-0 text-archive-sepia/60" />
+          <span>A batch has already been created for this session. Use <strong>"Start New Batch"</strong> from the Results step to begin fresh.</span>
+        </div>
+      )}
 
       <WizardNav
         back={{
@@ -130,7 +143,7 @@ export const ConfigureStep: React.FC = () => {
         next={{
           label: 'Commence Processing',
           onClick: handleStartExtraction,
-          disabled: fields.length === 0 || isPending || !batchName.trim(),
+          disabled: fields.length === 0 || isPending || !batchName.trim() || batchId !== null,
           loading: isPending,
           icon: <Play className="w-5 h-5 fill-current" />,
         }}

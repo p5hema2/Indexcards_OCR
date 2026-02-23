@@ -1,10 +1,10 @@
 # Project State
 
 ## Current Phase
-Phase 03.1: Dynamic Prompt Generation from Field Definitions with Configurable Prompt Template
+Phase 07: UAT Bug Fixes — Session Lifecycle, Batch Data Isolation, Navigation, Data Quality — COMPLETE
 
 ## Current Plan
-Plan 03 complete (UAT gap closure: domain-agnostic default prompt + template_service prompt_template persistence). Phase 03.1 fully complete. All UAT gaps closed.
+07-03: COMPLETE — Data quality and cosmetic fixes: batch status persistence (BUG-04), trailing newline in EditableCell (BUG-08), LIDO hardcode (BUG-09), page title (BUG-10), WebSocket race condition (BUG-11)
 
 ## Recent Milestones
 - [x] Codebase exploration completed.
@@ -32,7 +32,7 @@ Plan 03 complete (UAT gap closure: domain-agnostic default prompt + template_ser
 - [x] Phase 02 Plan 05 (gap closure): WizardNav sticky bottom navigation bar on Upload, Configure, Results steps.
 
 ## Active Tasks
-- Phase 02.1 fully verified (UAT 7/7 passed, 1 issue fixed inline). Ready to proceed to Phase 03 verification or Phase 4 planning.
+- Phase 07 complete. All 14 in-scope UAT bugs fixed (BUG-14 deferred as prompt engineering out of scope).
 
 ## Key Decisions
 - **Target Platform:** Web GUI.
@@ -91,11 +91,34 @@ Plan 03 complete (UAT gap closure: domain-agnostic default prompt + template_ser
 - **prompt_template persisted in template_service:** create_template() passes prompt_template to Template constructor; update_template() uses is-not-None guard matching existing name/fields pattern.
 - **PromptTemplateEditor collapsed by default:** non-intrusive for users who don't need prompt customization; power-user feature discoverable via expand toggle.
 - **null-means-default pattern throughout:** null in Zustand store = backend uses its own hardcoded German prompt; non-null = custom override sent via API.
+- **Feature 5 (custom_prompt) rejected — keep prompt_template from main:** BatchCreate.prompt_template, batch_manager, and ocr_engine all retain the prompt_template naming from main; custom_prompt parameter not added anywhere.
+- **Provider resolution via _resolve_provider():** call-time override pattern — api_endpoint/model_name/api_key passed per-call through process_batch → _process_card_sync → _call_vlm_api_resilient; no global settings mutation.
+- **OCR resilience improvements:** 401 exits immediately (no retry), 5xx retries with backoff, 4xx non-401/429 exits, ConnectionError/Timeout as distinct explicit retry branches; max_tokens bumped 1200 → 4096.
+- **Multi-entry detection:** isinstance(data, list) check after JSON parse; AI-returned array stored as _entries (JSON string) + _entry_count in result dict.
+- **asyncio.get_running_loop() before _save_checkpoint closure:** ensures loop captured in async context before entering thread pool.
+- **OcrProvider defaults to openrouter in store initialState:** backward compatible with existing sessions; PROVIDER_DEFAULT_MODELS maps provider string to default model.
+- **startBatch sends explicit provider body:** { provider, model } always sent even for defaults — no ambiguity in backend _resolve_provider().
+- **recursive connect() in useProcessingWebSocket:** wsRef.current === ws guard prevents stale closure reconnect; cleaner than previous newWs.onmessage = ws.onmessage assignment.
+- **multi-entry virtual filenames:** ${pageFilename}__entry_${idx} used as Zustand updateResultCell key — per-entry edit tracking without schema changes.
+- **XML exports fully client-side:** LIDO, EAD, Darwin Core, Dublin Core, MARC21-XML, METS/MODS all generated in-browser from results array; no new backend endpoints.
+- **App branding assets via git checkout branch -- path:** ThULB SVG and Hack the Heritage PNG copied directly from feat/phase-03-processing-results without manual download.
+- **Header retains main-branch history/archive navigation while adding ThULB logo:** combines best-of-both-branches rather than fully replacing header with source version.
+- **Single shared Lightbox in ResultsTable (not per-row):** one lightboxSrc state + one <Lightbox> instance; ThumbnailCell calls onOpenLightbox callback prop — eliminates N Lightbox mount/unmount cycles at 500+ rows.
+- **Error message as native browser tooltip on status chip (title attribute):** no separate display area or column; retry button rendered inside status column below chip — no separate actions column.
+- **Extraction column uses dl/dd definition list with grid-cols-[auto_1fr]:** all fields as key-value pairs in single table cell; visible fields filter excludes internal _-prefixed fields.
+- **ThumbnailCell rewritten as text-link button with Image icon:** zero <img> DOM nodes per row — eliminates DOM explosion at 500+ rows; onOpenLightbox callback prop replaces per-row Lightbox.
+- **EditableCell uses auto-resizing textarea:** height='auto' then scrollHeight applied on mount and onChange; resize-none overflow-hidden; Ctrl/Cmd+Enter commits, Escape cancels, plain Enter inserts newline; display uses whitespace-pre-wrap.
+- **Entry labels for multi-entry rows moved into Image column:** primary row shows ThumbnailCell + entry badge (flex-col); sub-rows show badge only — filename column eliminated.
+- **ResultsTable column order: Image, Status, Time, Extraction:** Extraction (widest) last; Duration moved before Extraction.
+- **update_batch_status in try+except separately (not finally):** status value differs per path — "completed"/"cancelled" in success path, "failed" in exception path; finally block cannot determine which status to use.
+- **EditableCell trailing newline trim:** draft.replace(/\n+$/, '') strips only trailing newlines before comparing to value — preserves intentional internal newlines in multi-line fields.
+- **Karteikarte replaces Tonbandkarteikarte in LIDO export:** generic German archival term for any index card type; previous term was music-archive-specific and incorrect for other collections.
+- **WebSocket CONNECTING guard:** set ref.onopen = () => ref.close() when readyState === CONNECTING to avoid "WebSocket is closed before connection is established" browser console warning.
 
 ## Last Session
-Stopped at: Completed Phase 03.1 Plan 03 — UAT gap closure: domain-agnostic default prompt + template_service prompt_template persistence
-Resume file: .planning/STATE.md
-Timestamp: 2026-02-22T16:57:44Z
+Stopped at: Completed Phase 07 Plan 03 — data quality fixes: batch status persistence, trailing newline trim, LIDO hardcode, page title, WS race condition
+Resume file: .planning/phases/07-uat-bug-fixes-session-lifecycle-batch-data-isolation-navigation-data-quality/07-03-SUMMARY.md
+Timestamp: 2026-02-23T19:55:00Z
 
 ## Accumulated Context
 
@@ -119,6 +142,16 @@ Timestamp: 2026-02-22T16:57:44Z
 - Phase 03.1 Plan 01 complete: prompt_template added to all 5 data model types (schema, TS, Python, Pydantic) and wired end-to-end through OCR pipeline with {{fields}} substitution and backward-compat fallback.
 - Phase 03.1 Plan 02 complete: PromptTemplateEditor React component with live preview, Zustand promptTemplate state, prompt_template wired through all frontend API calls (template save/load + batch creation).
 - Phase 03.1 Plan 03 complete: UAT gap closure — removed "aus dem Bereich Musik" from all default prompts (PromptTemplateEditor, ocr_engine, config.py); fixed template_service to persist prompt_template in create/update.
+- Phase 06 Plan 01 complete: Feature discovery interview — 8/9 features accepted, Feature 5 (custom_prompt) rejected.
+- Phase 06 Plan 02 complete: Branch feat/phase-06-ported-features created off main; backend reimplemented with Features 9 (cancel/results/retry), 6 (OCR resilience), 4 (provider selection + Ollama config).
+- Phase 06 Plan 03 complete: Frontend features ported — OcrProvider store (Feature 8), ProviderSelector + ConfigureStep wiring (Feature 4), startBatch with provider/model (Feature 9), recursive WS connect() (Feature 1), Results step with multi-entry expansion + 8 XML exports + hover thumbnails + retryingFilename (Feature 2).
+- Phase 06 Plan 06 complete: App branding — ThULB logo link in header, Hack the Heritage banner in sidebar, app title renamed (Feature 7).
+- Phase 06 Plan 07 complete: Results table restructure — single Extraction dl/dd column, merged status/retry/error column, shared Lightbox, text-link ThumbnailCell; closes UAT Tests 7 and 9.
+- Phase 06 Plan 08 complete: UAT gap closure — EditableCell textarea with auto-resize (Ctrl+Enter commit, Escape cancel, plain Enter newline), filename column removed (entry labels moved to Image column), column order Image/Status/Time/Extraction; closes UAT Tests 1, 5, 7.
+- Phase 07 added: UAT Bug Fixes — 15 bugs across 4 clusters (session lifecycle, batch data isolation, navigation, data quality) from comprehensive browser-automated UAT audit.
+- Phase 07 Plan 01 complete: Batch data isolation (BUG-06/07) fixed via useMemo field derivation from results data; session lifecycle (BUG-13/15) fixed via batchId guard + explanatory message in ConfigureStep; batch name uniqueness (BUG-05) fixed via time-inclusive default + BatchHistoryCard subtitle.
+- Phase 07 Plan 02 complete: Navigation fixes — sidebar Results navigation unlocked when batchId set (BUG-01/02); selectedTemplateName persisted in Zustand store + TemplateSelector initialized from store (BUG-03); file removal toast extended to 10s (BUG-12).
+- Phase 07 Plan 03 complete: Data quality fixes — batch status persisted after OCR (BUG-04); EditableCell trims trailing newlines (BUG-08); LIDO export uses generic Karteikarte (BUG-09); page title corrected to "Indexcards OCR" (BUG-10); WebSocket CONNECTING guard prevents console warning (BUG-11). Phase 07 complete.
 
 ### Performance Metrics
 | Phase | Plan | Duration | Tasks | Files |
@@ -140,6 +173,15 @@ Timestamp: 2026-02-22T16:57:44Z
 | 03.1  | 01   | ~4min    | 2     | 9     |
 | 03.1  | 02   | ~5min    | 2     | 7     |
 | 03.1  | 03   | ~2min    | 2     | 4     |
+| 06    | 01   | ~5min    | 1     | 0     |
+| 06    | 02   | ~30min   | 2     | 4     |
+| 06    | 03   | ~35min   | 6     | 10    |
+| 06    | 06   | ~5min    | 1     | 4     |
+| 06    | 07   | ~3min    | 2     | 2     |
+| 06    | 08   | ~5min    | 2     | 1     |
+| 07    | 01   | ~8min    | 2     | 3     |
+| 07    | 02   | ~5min    | 2     | 5     |
+| 07    | 03   | ~5min    | 2     | 6     |
 
 ## Blockers
 - None.

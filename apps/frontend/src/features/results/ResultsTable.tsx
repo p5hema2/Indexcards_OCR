@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,249 +6,352 @@ import {
   flexRender,
   createColumnHelper,
   type SortingState,
-  type ColumnDef,
 } from '@tanstack/react-table';
-import { RotateCcw } from 'lucide-react';
-import type { ResultRow } from '../../store/wizardStore';
-import { useWizardStore } from '../../store/wizardStore';
+import { RotateCcw, Loader2 } from 'lucide-react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
+import { useWizardStore, type ResultRow } from '../../store/wizardStore';
+import { ThumbnailCell } from './ThumbnailCell';
 
+interface ResultsTableProps {
+  results: ResultRow[];
+  fields: string[];
+  batchName: string;
+  onRetryImage: (filename: string) => void;
+  isProcessing: boolean;
+  retryingFilename?: string | null;
+}
 
-// Status color lookup map — avoid Tailwind JIT string concatenation pitfall
-const statusStyles: Record<string, string> = {
-  success: 'text-green-700 bg-green-50',
-  failed: 'text-red-600 bg-red-50',
+// DisplayRow extends ResultRow with multi-entry metadata for Findmittel pages
+type DisplayRow = ResultRow & {
+  _pageFilename: string;  // Original source page filename
+  _entryLabel: string;    // e.g. "2 / 7" (entry number / total entries)
+  _isSubRow: boolean;     // true = sub-row from a multi-entry Findmittel array
 };
+
+const statusStyles = {
+  success: 'text-green-700 bg-green-50/80',
+  failed:  'text-red-600  bg-red-50/80',
+} as const;
+
+const rowBg = {
+  success: '',
+  failed:  'bg-red-50/10',
+} as const;
 
 interface EditableCellProps {
   value: string;
   isEdited: boolean;
-  onCommit: (newValue: string) => void;
+  onCommit: (value: string) => void;
 }
 
-const EditableCell: React.FC<EditableCellProps> = ({ value, isEdited, onCommit }) => {
+function EditableCell({ value, isEdited, onCommit }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft]     = useState(value);
+  const textareaRef           = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus();
+    if (editing && textareaRef.current) {
+      textareaRef.current.focus();
+      // Auto-resize on mount
+      const ta = textareaRef.current;
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
     }
   }, [editing]);
 
   // Keep draft in sync with external value changes (e.g. after retry)
   useEffect(() => {
-    if (!editing) {
-      setDraft(value);
-    }
+    if (!editing) setDraft(value); // eslint-disable-line react-hooks/set-state-in-effect -- intentional sync from external value prop
   }, [value, editing]);
 
   const commit = () => {
     setEditing(false);
-    if (draft !== value) {
-      onCommit(draft);
-    }
+    const trimmed = draft.replace(/\n+$/, '');
+    if (trimmed !== value) onCommit(trimmed);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      commit();
-    } else if (e.key === 'Escape') {
-      setDraft(value);
-      setEditing(false);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDraft(e.target.value);
+    // Auto-resize on content change
+    const ta = e.target;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   };
 
   if (editing) {
     return (
-      <input
-        ref={inputRef}
+      <textarea
+        ref={textareaRef}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        rows={1}
+        onChange={handleChange}
         onBlur={commit}
-        onKeyDown={handleKeyDown}
-        className="w-full bg-transparent border-b border-archive-sepia/50 focus:outline-none font-serif text-sm text-archive-ink"
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        placeholder="Enter value..."
+        className="w-full bg-transparent border-b border-archive-sepia/50 focus:outline-none font-serif text-sm text-archive-ink resize-none overflow-hidden"
       />
     );
   }
 
   return (
     <span
-      onClick={() => {
-        setDraft(value);
-        setEditing(true);
-      }}
-      className={`cursor-pointer font-serif text-sm ${isEdited ? 'text-archive-sepia font-medium' : 'text-archive-ink/80'} hover:text-archive-sepia transition-colors`}
-      title={isEdited ? 'Edited — click to modify again' : 'Click to edit'}
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className={`cursor-text block w-full font-serif text-sm whitespace-pre-wrap ${isEdited ? 'text-archive-sepia font-semibold' : 'text-archive-ink/80'}`}
+      title={isEdited ? 'Edited — click to change' : 'Click to edit'}
     >
       {value || <span className="text-archive-ink/30 italic">—</span>}
-      {isEdited && <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-archive-sepia/60 align-middle" />}
+      {isEdited && <span className="ml-1 text-archive-sepia text-xs">•</span>}
     </span>
   );
-};
-
-interface ResultsTableProps {
-  results: ResultRow[];
-  fields: string[];
-  onRetryImage: (filename: string) => void;
-  isProcessing: boolean;
 }
+
+const columnHelper = createColumnHelper<DisplayRow>();
 
 export const ResultsTable: React.FC<ResultsTableProps> = ({
   results,
   fields,
+  batchName,
   onRetryImage,
   isProcessing,
+  retryingFilename,
 }) => {
+  const { updateResultCell } = useWizardStore();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const updateResultCell = useWizardStore((state) => state.updateResultCell);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  const columnHelper = createColumnHelper<ResultRow>();
+  // Expand multi-entry pages (Findmittel) into sub-rows.
+  // Pages with _entries JSON array are expanded into N DisplayRows — one per entry.
+  // Normal pages remain as single rows.
+  const displayRows = useMemo<DisplayRow[]>(() => {
+    const rows: DisplayRow[] = [];
+    for (const row of results) {
+      const entriesJson = row.data['_entries'];
+      if (row.status === 'success' && entriesJson) {
+        try {
+          const entries = JSON.parse(entriesJson) as Record<string, string>[];
+          const total = entries.length;
+          if (total === 0) {
+            rows.push({
+              ...row,
+              data: { '_entries': '[]', 'Hinweis': 'Keine Einträge erkannt' },
+              _pageFilename: row.filename,
+              _entryLabel: '0 Einträge',
+              _isSubRow: false,
+            });
+          } else {
+            entries.forEach((entry, idx) => {
+              rows.push({
+                ...row,
+                // Unique virtual filename for per-entry cell editing
+                filename: `${row.filename}__entry_${idx}`,
+                data: entry,
+                editedData: {},
+                _pageFilename: row.filename,
+                _entryLabel: `${idx + 1} / ${total}`,
+                _isSubRow: idx > 0,
+              });
+            });
+          }
+        } catch {
+          rows.push({ ...row, _pageFilename: row.filename, _entryLabel: '', _isSubRow: false });
+        }
+      } else {
+        rows.push({ ...row, _pageFilename: row.filename, _entryLabel: '', _isSubRow: false });
+      }
+    }
+    return rows;
+  }, [results]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<ResultRow, any>[] = [
-    // Filename column
-    columnHelper.accessor('filename', {
-      header: 'File',
-      cell: (info) => (
-        <span className="font-mono text-xs text-archive-ink/70 whitespace-nowrap">
-          {info.getValue()}
-        </span>
-      ),
-    }),
-
-    // Status column
-    columnHelper.accessor('status', {
-      header: 'Status',
-      cell: (info) => {
-        const status = info.getValue();
-        const style = statusStyles[status] ?? 'text-archive-ink/60 bg-parchment-dark/20';
+  const columns = [
+    // Column 1: Thumbnail — text link, clicks open shared lightbox; shows entry label for multi-entry rows
+    columnHelper.accessor('_pageFilename', {
+      id: 'thumbnail',
+      header: 'Image',
+      enableSorting: true,
+      cell: ({ row }) => {
+        const r = row.original;
+        if (r._isSubRow) {
+          // Sub-rows: show entry label badge with indent
+          return (
+            <span className="font-mono text-xs text-archive-sepia/70 bg-archive-sepia/10 rounded px-1.5 py-0.5 ml-3 block self-start">
+              Eintrag {r._entryLabel}
+            </span>
+          );
+        }
+        if (r._entryLabel) {
+          // Primary row of a multi-entry page: show thumbnail + entry label below
+          return (
+            <div className="flex flex-col gap-1">
+              <ThumbnailCell
+                batchName={batchName}
+                filename={r._pageFilename}
+                onOpenLightbox={(src) => setLightboxSrc(src)}
+              />
+              <span className="font-mono text-xs text-archive-sepia/70 bg-archive-sepia/10 rounded px-1.5 py-0.5 self-start">
+                Eintrag {r._entryLabel}
+              </span>
+            </div>
+          );
+        }
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${style}`}>
-            {status}
-          </span>
+          <ThumbnailCell
+            batchName={batchName}
+            filename={r._pageFilename}
+            onOpenLightbox={(src) => setLightboxSrc(src)}
+          />
         );
       },
     }),
-
-    // Dynamic field columns
-    ...fields.map((field) =>
-      columnHelper.display({
-        id: `field_${field}`,
-        header: field,
-        cell: ({ row }) => {
-          const ocrValue = row.original.data[field] ?? '';
-          const editedValue = row.original.editedData[field];
-          const displayValue = editedValue !== undefined ? editedValue : ocrValue;
-          const isEdited = editedValue !== undefined && editedValue !== ocrValue;
-
-          return (
-            <EditableCell
-              value={displayValue}
-              isEdited={isEdited}
-              onCommit={(newValue) =>
-                updateResultCell(row.original.filename, field, newValue)
-              }
-            />
-          );
-        },
-      })
-    ),
-
-    // Duration column
+    // Column 2: Status — chip with error tooltip + retry button below for failed rows
+    columnHelper.accessor('status', {
+      header: 'Status',
+      enableSorting: true,
+      cell: ({ row }) => {
+        const r = row.original;
+        // Sub-rows inherit page status — only show on first sub-row
+        if (r._isSubRow) return null;
+        const s = r.status;
+        const isRetrying = retryingFilename === r._pageFilename;
+        return (
+          <div className="flex flex-col items-start gap-1.5">
+            <span
+              className={`px-2 py-0.5 rounded text-xs uppercase tracking-widest font-semibold ${statusStyles[s]}`}
+              title={r.error || undefined}
+            >
+              {s}
+            </span>
+            {s === 'failed' && (
+              <button
+                onClick={() => onRetryImage(r._pageFilename)}
+                disabled={isProcessing || isRetrying}
+                className="flex items-center gap-1 px-2 py-1 text-xs border border-parchment-dark rounded text-archive-ink/60 hover:text-archive-ink hover:border-archive-sepia transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isRetrying
+                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                  : <RotateCcw className="w-3 h-3" />}
+                {isRetrying ? 'Retrying...' : 'Retry'}
+              </button>
+            )}
+          </div>
+        );
+      },
+    }),
+    // Column 3: Duration
     columnHelper.accessor('duration', {
-      header: 'Duration',
-      cell: (info) => (
-        <span className="font-mono text-xs text-archive-ink/50">
-          {info.getValue().toFixed(1)}s
-        </span>
-      ),
+      header: 'Time',
+      enableSorting: true,
+      cell: ({ row }) => {
+        if (row.original._isSubRow) return null;
+        return (
+          <span className="font-mono text-xs text-archive-ink/50">{row.original.duration.toFixed(1)}s</span>
+        );
+      },
     }),
-
-    // Error column
+    // Column 4: Extraction — all fields as key-value definition list (widest column last)
     columnHelper.display({
-      id: 'error',
-      header: 'Error',
-      cell: ({ row }) =>
-        row.original.status === 'failed' && row.original.error ? (
-          <span className="text-xs text-red-600/80 italic font-serif">{row.original.error}</span>
-        ) : null,
-    }),
-
-    // Actions column
-    columnHelper.display({
-      id: 'actions',
-      header: '',
-      cell: ({ row }) =>
-        row.original.status === 'failed' ? (
-          <button
-            onClick={() => onRetryImage(row.original.filename)}
-            disabled={isProcessing}
-            className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-serif border border-parchment-dark/50 text-archive-ink/50 hover:border-archive-sepia/40 hover:text-archive-sepia hover:bg-parchment-dark/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Retry
-          </button>
-        ) : null,
+      id: 'extraction',
+      header: 'Extraction',
+      cell: ({ row }) => {
+        const r = row.original;
+        const visibleFields = fields.filter(f => !f.startsWith('_'));
+        if (visibleFields.length === 0) return null;
+        return (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            {visibleFields.map((field) => {
+              const ocrValue = r.data[field] ?? '';
+              const editedValue = r.editedData[field];
+              const displayValue = editedValue !== undefined ? editedValue : ocrValue;
+              return (
+                <React.Fragment key={field}>
+                  <dt className="font-mono text-xs text-archive-ink/50 whitespace-nowrap py-0.5">{field}</dt>
+                  <dd className="py-0.5">
+                    <EditableCell
+                      value={displayValue}
+                      isEdited={editedValue !== undefined && editedValue !== ocrValue}
+                      onCommit={(v) => updateResultCell(r.filename, field, v)}
+                    />
+                  </dd>
+                </React.Fragment>
+              );
+            })}
+          </dl>
+        );
+      },
     }),
   ];
 
   const table = useReactTable({
-    data: results,
+    data: displayRows,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    // Unique row ID: virtual filename (contains __entry_N for sub-rows)
+    getRowId: (row) => row.filename,
   });
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-parchment-dark/30">
+    <div className="overflow-x-auto">
       <table className="w-full border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-parchment-dark/30 bg-parchment-dark/10">
+            <tr key={headerGroup.id} className="border-b border-parchment-dark/40">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
                   onClick={header.column.getToggleSortingHandler()}
-                  className={`px-4 py-3 text-left text-xs uppercase tracking-widest text-archive-ink/40 font-semibold whitespace-nowrap ${
-                    header.column.getCanSort() ? 'cursor-pointer select-none hover:text-archive-sepia transition-colors' : ''
+                  className={`px-4 py-2 text-left text-xs uppercase tracking-widest text-archive-ink/40 font-semibold whitespace-nowrap ${
+                    header.column.getCanSort() ? 'cursor-pointer select-none hover:text-archive-sepia' : ''
                   }`}
                 >
-                  {header.isPlaceholder ? null : (
-                    <span className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && <span>↑</span>}
-                      {header.column.getIsSorted() === 'desc' && <span>↓</span>}
-                    </span>
-                  )}
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {({ asc: ' ↑', desc: ' ↓' } as Record<string, string>)[header.column.getIsSorted() as string] ?? ''}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row, rowIndex) => (
-            <tr
-              key={row.id}
-              className={`border-b border-parchment-dark/20 transition-colors ${
-                row.original.status === 'failed'
-                  ? 'bg-red-50/20'
-                  : rowIndex % 2 === 0
-                  ? 'bg-parchment-light/20'
-                  : 'bg-transparent'
-              } hover:bg-parchment-dark/10`}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-2 text-sm font-serif">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {table.getRowModel().rows.map((row, i) => {
+            const r = row.original;
+            const isFirstSubRow = r._entryLabel && !r._isSubRow;
+            return (
+              <tr
+                key={row.id}
+                className={[
+                  'border-b border-parchment-dark/20',
+                  r._isSubRow
+                    ? 'bg-parchment-light/5 border-l-2 border-l-archive-sepia/20'
+                    : rowBg[r.status],
+                  isFirstSubRow ? 'border-t-2 border-t-archive-sepia/20' : '',
+                  !r._isSubRow && !r._entryLabel && i % 2 !== 0 ? 'bg-parchment-light/10' : '',
+                ].filter(Boolean).join(' ')}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 py-2 align-top">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {displayRows.length === 0 && (
+        <p className="text-center py-8 text-archive-ink/40 italic">No results to display.</p>
+      )}
+
+      {/* Single shared Lightbox instance — opened by any ThumbnailCell click */}
+      <Lightbox
+        open={lightboxSrc !== null}
+        close={() => setLightboxSrc(null)}
+        slides={lightboxSrc ? [{ src: lightboxSrc }] : []}
+      />
     </div>
   );
 };

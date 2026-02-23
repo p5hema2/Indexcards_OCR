@@ -32,8 +32,19 @@ const createBatch = async (data: BatchCreate): Promise<BatchResponse> => {
   return response.data;
 };
 
-const startBatch = async (batchName: string): Promise<{ message: string; batch_name: string }> => {
-  const response = await axios.post<{ message: string; batch_name: string }>(`/api/v1/batches/${batchName}/start`);
+const startBatch = async ({
+  batchName,
+  provider = 'openrouter',
+  model,
+}: {
+  batchName: string;
+  provider?: string;
+  model?: string;
+}): Promise<{ message: string; batch_name: string }> => {
+  const response = await axios.post<{ message: string; batch_name: string }>(
+    `/api/v1/batches/${batchName}/start`,
+    { provider, ...(model ? { model } : {}) }
+  );
   return response.data;
 };
 

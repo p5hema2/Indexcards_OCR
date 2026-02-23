@@ -2,6 +2,15 @@ import React from 'react';
 import { useWizardStore } from '../store/wizardStore';
 import type { WizardStep } from '../store/wizardStore';
 import { Upload, Settings, Play, FileText, CheckCircle2, Archive, Plus } from 'lucide-react';
+import hackBannerUrl from '../../pics/hacktheheritage_banner.png';
+
+// Obfuscated contact info — XOR-encoded to prevent email harvesting from public repo
+const _d = (c: number[]) => c.map(v => String.fromCharCode(v ^ 0x42)).join('');
+const _AUTHORS: readonly { name: string; e?: readonly number[] }[] = [
+  { name: 'Tom Meißner',  e: [0x36,0x2d,0x2f,0x6c,0x2f,0x27,0x2b,0x31,0x31,0x2c,0x27,0x30,0x02,0x37,0x2c,0x2b,0x6f,0x28,0x27,0x2c,0x23,0x6c,0x26,0x27] },
+  { name: 'Martin Heß',   e: [0x2f,0x23,0x30,0x36,0x2b,0x2c,0x6c,0x2a,0x27,0x31,0x31,0x7a,0x77,0x02,0x25,0x2f,0x23,0x2b,0x2e,0x6c,0x21,0x2d,0x2f] },
+  { name: 'Claude Code' },
+];
 
 const STEPS: { key: WizardStep; label: string; icon: React.ReactNode }[] = [
   { key: 'upload', label: '1. Upload', icon: <Upload size={18} /> },
@@ -15,7 +24,7 @@ export const Sidebar: React.FC = () => {
   const view = useWizardStore((state) => state.view);
   const setView = useWizardStore((state) => state.setView);
   const setStep = useWizardStore((state) => state.setStep);
-  const resetWizard = useWizardStore((state) => state.resetWizard);
+  const batchId = useWizardStore((state) => state.batchId);
 
   const getStepStatus = (stepKey: WizardStep) => {
     if (view === 'history') return 'pending';
@@ -29,13 +38,23 @@ export const Sidebar: React.FC = () => {
   };
 
   const handleStepClick = (stepKey: WizardStep) => {
-    // Only allow navigating back to upload or configure — never to processing or results via sidebar
-    if (stepKey === 'processing' || stepKey === 'results') return;
+    // Processing is never accessible via sidebar (by design)
+    if (stepKey === 'processing') return;
+    // Results: allow sidebar click only when a batch is loaded (batchId set)
+    if (stepKey === 'results') {
+      if (batchId) {
+        setStep('results');
+      }
+      return;
+    }
+    // Upload/Configure: allow clicking completed steps to go back
     const status = getStepStatus(stepKey);
     if (status === 'complete') {
       setStep(stepKey);
     }
   };
+
+  const resetWizard = useWizardStore((state) => state.resetWizard);
 
   const handleShowArchive = () => {
     setView('history');
@@ -48,13 +67,44 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 border-r border-parchment-dark overflow-y-auto shrink-0 p-4 flex flex-col gap-2">
-      <div className="text-xs uppercase font-bold text-archive-sepia/50 mb-4 px-2 tracking-widest">Workflow</div>
+      {/* Top actions */}
+      <button
+        onClick={handleNewBatch}
+        className="flex items-center gap-3 px-3 py-3 rounded transition-all duration-200 w-full text-left text-archive-ink/50 hover:text-archive-ink/80 hover:bg-parchment-dark/20"
+      >
+        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-parchment-dark/50">
+          <Plus size={14} />
+        </div>
+        <span className="font-medium text-sm">New Batch</span>
+      </button>
+      <button
+        onClick={handleShowArchive}
+        className={`
+          flex items-center gap-3 px-3 py-3 rounded transition-all duration-200 w-full text-left
+          ${view === 'history'
+            ? 'bg-parchment-dark text-archive-ink parchment-shadow'
+            : 'text-archive-ink/50 hover:text-archive-ink/80 hover:bg-parchment-dark/20'
+          }
+        `}
+      >
+        <div className={`
+          w-6 h-6 rounded-full flex items-center justify-center transition-colors
+          ${view === 'history' ? 'bg-archive-sepia text-parchment' : 'bg-parchment-dark/50'}
+        `}>
+          <Archive size={14} />
+        </div>
+        <span className="font-medium text-sm">Batch Archive</span>
+      </button>
+
+      <div className="text-xs uppercase font-bold text-archive-sepia/50 mb-4 mt-2 px-2 tracking-widest">Workflow</div>
 
       {STEPS.map((step) => {
         const status = getStepStatus(step.key);
         const isActive = status === 'active';
         const isComplete = status === 'complete';
-        const isClickable = isComplete && step.key !== 'processing' && step.key !== 'results';
+        const isClickable =
+          (isComplete && step.key !== 'processing' && step.key !== 'results') ||
+          (step.key === 'results' && !!batchId);
 
         return (
           <div
@@ -81,45 +131,30 @@ export const Sidebar: React.FC = () => {
         );
       })}
 
-      {/* Divider */}
-      <div className="border-t border-parchment-dark/40 mt-2 pt-3 flex flex-col gap-1">
-        {/* Batch Archive link */}
-        <button
-          onClick={handleShowArchive}
-          className={`
-            flex items-center gap-3 px-3 py-3 rounded transition-all duration-200 w-full text-left
-            ${view === 'history'
-              ? 'bg-parchment-dark text-archive-ink parchment-shadow'
-              : 'text-archive-ink/50 hover:text-archive-ink/80 hover:bg-parchment-dark/20'
-            }
-          `}
-        >
-          <div className={`
-            w-6 h-6 rounded-full flex items-center justify-center transition-colors
-            ${view === 'history' ? 'bg-archive-sepia text-parchment' : 'bg-parchment-dark/50'}
-          `}>
-            <Archive size={14} />
-          </div>
-          <span className="font-medium text-sm">Batch Archive</span>
-        </button>
-
-        {/* New Batch link — visible when in history view */}
-        {view === 'history' && (
-          <button
-            onClick={handleNewBatch}
-            className="flex items-center gap-3 px-3 py-3 rounded transition-all duration-200 w-full text-left text-archive-ink/50 hover:text-archive-ink/80 hover:bg-parchment-dark/20"
-          >
-            <div className="w-6 h-6 rounded-full flex items-center justify-center bg-parchment-dark/50">
-              <Plus size={14} />
-            </div>
-            <span className="font-medium text-sm">New Batch</span>
-          </button>
-        )}
-      </div>
-
-      <div className="mt-auto border-t border-parchment-dark pt-6 px-2">
-        <div className="text-[10px] text-archive-ink/30 italic uppercase tracking-tighter">
-          Archive-Ready Solution
+      {/* Event banner */}
+      <div className="mt-auto border-t border-parchment-dark/60 pt-4 px-1 flex flex-col gap-2">
+        <span className="text-[9px] uppercase tracking-widest text-archive-ink/30 font-semibold px-1">
+          A Hack the Heritage Project
+        </span>
+        <div className="text-xs text-archive-ink/60 px-1 leading-relaxed">
+          by:
+          {_AUTHORS.map((a, i) => {
+            const email = a.e ? _d([...a.e]) : null;
+            return (
+              <React.Fragment key={i}>
+                <br/>
+                {a.name}{email && <>{' '}<a href={`mailto:${email}`} className="underline hover:text-archive-ink/80">{email}</a></>}
+                {i < _AUTHORS.length - 1 && ','}
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <div className="rounded overflow-hidden border border-parchment-dark/40 opacity-70 hover:opacity-100 transition-opacity">
+          <img
+            src={hackBannerUrl}
+            alt="Hack the Heritage"
+            className="w-full h-auto block"
+          />
         </div>
       </div>
     </aside>
