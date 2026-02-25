@@ -12,7 +12,7 @@ import { WizardNav } from '../../components/WizardNav';
 
 export const ConfigureStep: React.FC = () => {
   const { files, fields, sessionId, batchId, provider, model, setStep, setBatchId, promptTemplate } = useWizardStore();
-  const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 16).replace('T', '_')}`);
+  const [batchName, setBatchName] = useState(`Batch_${new Date().toISOString().slice(0, 16).replace('T', '_').replaceAll(':', '-')}`);
 
   const createBatchMutation = useCreateBatchMutation();
   const startBatchMutation = useStartBatchMutation();

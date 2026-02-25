@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import time
 import uuid
@@ -35,9 +36,10 @@ class BatchManager:
         if not temp_path.exists() or not any(temp_path.iterdir()):
             raise ValueError(f"No files found for session {session_id}")
 
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        # Sanitize custom_name: replace characters illegal on Windows (< > : " / \ | ? *)
+        safe_name = re.sub(r'[<>:"/\\|?*]', '-', custom_name)
         unique_id = str(uuid.uuid4())[:8]
-        batch_name = f"{custom_name}_{timestamp}_{unique_id}"
+        batch_name = f"{safe_name}_{unique_id}"
         batch_path = self.batches_dir / batch_name
         
         # Create batch directory
