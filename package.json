@@ -19,5 +19,5 @@
     "apps/*",
     "packages/*"
   ],
-  "packageManager": "npm@11.6.2"
+  "packageManager": "npm@11.10.1+sha512.c286afb98d8e803150d4afed07d407b14b96f7cf6729fbec29337f879a86c92fb7f8186f5cdfc30364cdcf1e7af496857d3aab113e5b110347c1584593e53582"
 }
